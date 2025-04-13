@@ -12,9 +12,9 @@ router.get('/', async function (req, res) {
     const result = await management.users.get({
         id: req.auth.payload.sub,
     });
-    const {name, email, given_name, family_name, nickname, picture} = result.data;
+    const {name, email, given_name, family_name, nickname, picture, user_metadata} = result.data;
     console.log(`Get user info for ${email}`);
-    res.json({name, email, given_name, family_name, nickname, picture});
+    res.json({name, email, given_name, family_name, nickname, picture, user_metadata});
 });
 
 module.exports = router;
