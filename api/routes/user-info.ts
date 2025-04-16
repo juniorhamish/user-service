@@ -1,3 +1,5 @@
+import {Request, Response} from "express";
+
 const {ManagementClient} = require('auth0');
 const express = require('express');
 const router = express.Router();
@@ -8,13 +10,13 @@ const management = new ManagementClient({
     domain: process.env.AUTH0_DOMAIN,
 });
 
-router.get('/', async function (req, res) {
+router.get('/', async function (request: Request, response: Response) {
     const result = await management.users.get({
-        id: req.auth.payload.sub,
+        id: request.auth?.payload.sub,
     });
     const {name, email, given_name, family_name, nickname, picture, user_metadata} = result.data;
     console.log(`Get user info for ${email}`);
-    res.json({name, email, given_name, family_name, nickname, picture, user_metadata});
+    response.json({name, email, given_name, family_name, nickname, picture, user_metadata});
 });
 
 module.exports = router;
