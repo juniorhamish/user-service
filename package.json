@@ -3,8 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "ts-node api/index.ts",
-    "dev": "nodemon api/index.ts",
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "dev": "tsx --watch api/index.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "prettier:check": "prettier . --check",
     "prettier:write": "prettier . --write"
   },
@@ -16,12 +20,16 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@tsconfig/node22": "^22.0.1",
     "@types/express": "^5.0.1",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.14.1",
-    "nodemon": "^3.1.9",
+    "eslint": "^9.24.0",
+    "globals": "^16.0.0",
     "prettier": "^3.5.3",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.30.1"
   }
 }

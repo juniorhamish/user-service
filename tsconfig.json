@@ -1,14 +1,9 @@
 {
+  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2024",
-    "module": "commonjs",
-    "sourceMap": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "types": ["express-oauth2-jwt-bearer"],
     "outDir": "./dist",
     "rootDir": "./api"
   },
-  "include": ["api"],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts"],
+  "exclude": ["dist"]
 }
