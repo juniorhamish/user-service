@@ -1,11 +1,8 @@
-import { NextFunction, Request, Response } from 'express';
-
-require('dotenv').config();
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-const userInfoRouter = require('./routes/user-info');
-const { auth } = require('express-oauth2-jwt-bearer');
+import 'dotenv/config';
+import express, { NextFunction, Request, Response } from 'express';
+import logger from 'morgan';
+import userInfoRouter from './routes/user-info';
+import { auth } from 'express-oauth2-jwt-bearer';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -19,7 +16,6 @@ app.use(logger('combined'));
 app.use(jwtCheck);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 
 // Routes
 app.use('/user-info', userInfoRouter);
