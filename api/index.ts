@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { NextFunction, Request, Response } from 'express';
 import logger from 'morgan';
 import userInfoRouter from './routes/user-info';
-import { auth } from 'express-oauth2-jwt-bearer';
+import { auth, InvalidRequestError } from 'express-oauth2-jwt-bearer';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -24,13 +24,13 @@ app.use('/user-info', userInfoRouter);
 // Uncaught errors returned as 500 internal server error
 app.use(
   (
-    error: Error,
+    error: InvalidRequestError,
     _request: Request,
     response: Response,
     _next: NextFunction,
   ) => {
     console.log(error.message);
-    response.status(500).json({ error: error.message });
+    response.status(error.status).json({ error: error.message });
   },
 );
 
