@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import express, { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import logger from 'morgan';
 import userInfoRouter from './routes/user-info';
-import { auth, InvalidRequestError } from 'express-oauth2-jwt-bearer';
+import { auth } from 'express-oauth2-jwt-bearer';
+import { generalErrorHandler, notFoundHandler } from './error-handler';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -19,25 +20,8 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/user-info', userInfoRouter);
-
-// Error handling
-// Uncaught errors returned as 500 internal server error
-app.use(
-  (
-    error: InvalidRequestError,
-    _request: Request,
-    response: Response,
-    _next: NextFunction,
-  ) => {
-    console.log(error.message);
-    response.status(error.status).json({ error: error.message });
-  },
-);
-
-// Catch all unprocessed requests and respond with 404
-app.use((request: Request, response: Response) => {
-  response.status(404).json({ error: `${request.path} Not Found` });
-});
+// Error handlers
+app.use(generalErrorHandler, notFoundHandler);
 
 const port = process.env.PORT || '3000';
 app.listen(port, () => console.log(`Listening on port ${port}`));
