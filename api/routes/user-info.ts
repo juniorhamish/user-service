@@ -1,6 +1,5 @@
-import { Request, Response } from 'express';
-
 import { ManagementClient } from 'auth0';
+import { Request, Response } from 'express';
 import express from 'express';
 const router = express.Router();
 
@@ -15,20 +14,20 @@ router.get('/', async function (request: Request, response: Response) {
     id: request.auth?.payload.sub ?? '',
   });
   const {
-    name,
     email,
-    given_name,
     family_name,
+    given_name,
+    name,
     nickname,
     picture,
     user_metadata,
   } = result.data;
   console.log(`Get user info for ${email}`);
   response.json({
-    name,
     email,
-    given_name,
     family_name,
+    given_name,
+    name,
     nickname,
     picture,
     user_metadata,

@@ -1,5 +1,5 @@
-import { InvalidRequestError } from 'express-oauth2-jwt-bearer';
 import { NextFunction, Request, Response } from 'express';
+import { InvalidRequestError } from 'express-oauth2-jwt-bearer';
 
 export const generalErrorHandler = (
   error: InvalidRequestError,

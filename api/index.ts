@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
-import logger from 'morgan';
-import userInfoRouter from './routes/user-info';
 import { auth } from 'express-oauth2-jwt-bearer';
+import logger from 'morgan';
+
 import { generalErrorHandler, notFoundHandler } from './error-handler';
+import userInfoRouter from './routes/user-info';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -23,7 +24,9 @@ app.use('/user-info', userInfoRouter);
 // Error handlers
 app.use(generalErrorHandler, notFoundHandler);
 
-const port = process.env.PORT || '3000';
-app.listen(port, () => console.log(`Listening on port ${port}`));
+const port = process.env.PORT ?? '3000';
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
+});
 
 module.exports = app;

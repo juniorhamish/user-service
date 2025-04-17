@@ -2,6 +2,7 @@
   "name": "user-service",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "type-check": "tsc --noEmit",
@@ -26,6 +27,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.14.1",
     "eslint": "^9.24.0",
+    "eslint-plugin-perfectionist": "^4.11.0",
     "globals": "^16.0.0",
     "prettier": "^3.5.3",
     "tsx": "^4.19.3",
