@@ -3,8 +3,8 @@ import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 import logger from 'morgan';
 
-import { generalErrorHandler, notFoundHandler } from './error-handler';
-import userInfoRouter from './routes/user-info';
+import { generalErrorHandler, notFoundHandler } from './error-handler.js';
+import userInfoRouter from './routes/user-info.js';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
