@@ -4,9 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
     "type-check": "tsc --noEmit",
-    "start": "node dist/api/index.js",
+    "start": "tsx api/index.js",
     "dev": "tsx --watch api/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
