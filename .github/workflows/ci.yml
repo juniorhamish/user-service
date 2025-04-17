@@ -23,5 +23,5 @@ jobs:
         run: npm run type-check
       - name: Run ESLint
         run: npm run lint
-      - name: Check Prettier formatting
+      - name: Check prettier formatting
         run: npm run prettier:check
