@@ -6,7 +6,7 @@
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "start": "node dist/index.js",
-    "dev": "tsx --watch api/index.ts",
+    "dev": "tsx --watch src/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "prettier:check": "prettier . --check",
