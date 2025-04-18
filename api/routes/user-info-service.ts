@@ -1,12 +1,14 @@
 import { ManagementClient } from 'auth0';
 
+import { UserInfo } from '../types/UserInfo.js';
+
 const management = new ManagementClient({
   clientId: process.env.AUTH0_CLIENT_ID ?? '',
   clientSecret: process.env.AUTH0_CLIENT_SECRET ?? '',
   domain: process.env.AUTH0_DOMAIN ?? '',
 });
 
-const getUserInfo = async (userId: string) => {
+const getUserInfo = async (userId: string): Promise<UserInfo> => {
   const result = await management.users.get({
     id: userId,
   });
