@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
+import helmet from 'helmet';
 import logger from 'morgan';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
@@ -15,9 +16,9 @@ const jwtCheck = auth({
 const app = express();
 
 app.use(logger('combined'));
+app.use(helmet());
 app.use(jwtCheck);
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/user-info', userInfoRouter);

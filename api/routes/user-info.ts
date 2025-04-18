@@ -1,37 +1,21 @@
-import { ManagementClient } from 'auth0';
-import { Request, Response } from 'express';
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
+import { UnauthorizedError } from 'express-oauth2-jwt-bearer';
+
+import getUserInfo from './user-info-service.js';
+
 const router = express.Router();
 
-const management = new ManagementClient({
-  clientId: process.env.AUTH0_CLIENT_ID ?? '',
-  clientSecret: process.env.AUTH0_CLIENT_SECRET ?? '',
-  domain: process.env.AUTH0_DOMAIN ?? '',
-});
-
-router.get('/', async function (request: Request, response: Response) {
-  const result = await management.users.get({
-    id: request.auth?.payload.sub ?? '',
-  });
-  const {
-    email,
-    family_name,
-    given_name,
-    name,
-    nickname,
-    picture,
-    user_metadata,
-  } = result.data;
-  console.log(`Get user info for ${email}`);
-  response.json({
-    email,
-    family_name,
-    given_name,
-    name,
-    nickname,
-    picture,
-    user_metadata,
-  });
-});
+router.get(
+  '/',
+  async function (request: Request, response: Response, next: NextFunction) {
+    if (request.auth?.payload.sub) {
+      const userInfo = await getUserInfo(request.auth.payload.sub);
+      console.log(`Get user info for ${userInfo.email}`);
+      response.json(userInfo);
+    } else {
+      next(new UnauthorizedError('Invalid credentials'));
+    }
+  },
+);
 
 export default router;
