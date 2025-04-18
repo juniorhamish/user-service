@@ -13,24 +13,17 @@ router.get('/', async function (request: Request, response: Response) {
   const result = await management.users.get({
     id: request.auth?.payload.sub ?? '',
   });
-  const {
-    email,
-    family_name,
-    given_name,
-    name,
-    nickname,
-    picture,
-    user_metadata,
-  } = result.data;
+  const { email, family_name, given_name, nickname, user_metadata } =
+    result.data;
   console.log(`Get user info for ${email}`);
   response.json({
+    avatarImageSource: user_metadata.avatarImageSource as string,
+    avatarSource: user_metadata.avatarSource as string,
     email,
-    family_name,
-    given_name,
-    name,
+    firstName: given_name,
+    lastName: family_name,
     nickname,
-    picture,
-    user_metadata,
+    picture: user_metadata.picture as string,
   });
 });
 
