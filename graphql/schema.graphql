@@ -1,0 +1,12 @@
+type UserInfo {
+  avatarImageSource: String
+  email: String
+  firstName: String
+  gravatarEmailAddress: String
+  lastName: String
+  nickname: String
+  picture: String
+}
+type Query {
+  getUserInfo: UserInfo
+}
