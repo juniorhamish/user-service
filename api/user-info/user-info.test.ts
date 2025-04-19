@@ -22,9 +22,18 @@ describe('user info', () => {
       );
     });
     it('should throw an error if the user ID has not been set in the request', async () => {
-      const response = await request(app).get('/user-info');
+      const response = await request(app)
+        .post('/graphql')
+        .send({ query: `query { getUserInfo { email } }` });
 
-      expect(response.body).toEqual({ error: 'Invalid credentials' });
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          errors: expect.arrayContaining([
+            expect.objectContaining({ message: 'Invalid credentials' }),
+          ]),
+        }),
+      );
     });
   });
   describe('authenticated', () => {
@@ -43,7 +52,9 @@ describe('user info', () => {
       );
     });
     it('should get the user info for the user ID set in the request', async () => {
-      await request(app).get('/user-info');
+      await request(app)
+        .post('/graphql')
+        .send({ query: `query { getUserInfo { email } }` });
 
       expect(getUserInfo).toHaveBeenCalledWith('UserID');
     });
@@ -59,10 +70,26 @@ describe('user info', () => {
         picture: '',
       });
 
-      await request(app).get('/user-info');
+      await request(app)
+        .post('/graphql')
+        .send({ query: `query { getUserInfo { email } }` });
 
       expect(console.log).toHaveBeenCalledWith(
         'Get user info for test@foo.com',
+      );
+    });
+    it('should log unknown user if the email address is not set', async () => {
+      vi.spyOn(console, 'log');
+      vi.mocked(getUserInfo).mockResolvedValue({
+        email: undefined,
+      });
+
+      await request(app)
+        .post('/graphql')
+        .send({ query: `query { getUserInfo { email } }` });
+
+      expect(console.log).toHaveBeenCalledWith(
+        'Get user info for unknown user',
       );
     });
     it('should return the user info as json', async () => {
@@ -76,9 +103,39 @@ describe('user info', () => {
         picture: 'G',
       });
 
-      const response = await request(app).get('/user-info');
+      const response = await request(app)
+        .post('/graphql')
+        .send({
+          query: `
+            query {
+              getUserInfo {
+                avatarImageSource
+                email
+                firstName
+                gravatarEmailAddress
+                lastName
+                nickname
+                picture
+              }
+            }`,
+        });
 
       expect(response.body).toEqual({
+        data: {
+          getUserInfo: {
+            avatarImageSource: 'A',
+            email: 'B',
+            firstName: 'C',
+            gravatarEmailAddress: 'D',
+            lastName: 'E',
+            nickname: 'F',
+            picture: 'G',
+          },
+        },
+      });
+    });
+    it('should return only the requested fields', async () => {
+      vi.mocked(getUserInfo).mockResolvedValue({
         avatarImageSource: 'A',
         email: 'B',
         firstName: 'C',
@@ -86,6 +143,25 @@ describe('user info', () => {
         lastName: 'E',
         nickname: 'F',
         picture: 'G',
+      });
+
+      const response = await request(app)
+        .post('/graphql')
+        .send({
+          query: `
+            query {
+              getUserInfo {
+                firstName
+              }
+            }`,
+        });
+
+      expect(response.body).toEqual({
+        data: {
+          getUserInfo: {
+            firstName: 'C',
+          },
+        },
       });
     });
   });

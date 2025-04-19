@@ -1,9 +1,12 @@
 import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    extensions: ['.js', '.mjs', '.ts', '.mts'],
+  },
   test: {
     coverage: {
-      exclude: ['api/types', ...coverageConfigDefaults.exclude],
+      exclude: ['api/generated', ...coverageConfigDefaults.exclude],
       reporter: ['text', 'json-summary', 'json', 'html'],
       reportOnFailure: true,
       thresholds: {

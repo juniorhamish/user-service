@@ -1,7 +1,7 @@
 import { ManagementClient } from 'auth0';
 import { Mock } from 'vitest';
 
-import { UserInfo } from '../types/UserInfo.js';
+import { UserInfo } from '../generated/types.js';
 
 const mockedAuth0Client = vi.hoisted(() => ({
   users: {

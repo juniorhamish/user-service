@@ -1,6 +1,6 @@
 import { ManagementClient } from 'auth0';
 
-import { UserInfo } from '../types/UserInfo.js';
+import { UserInfo } from '../generated/types.js';
 
 const management = new ManagementClient({
   clientId: process.env.AUTH0_CLIENT_ID ?? '',
