@@ -24,8 +24,7 @@ describe('user info', () => {
     it('should throw an error if the user ID has not been set in the request', async () => {
       const response = await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` })
-        .set('Accept', 'application/json');
+        .send({ query: `query { getUserInfo { email } }` });
 
       expect(response.body).toEqual(
         expect.objectContaining({
@@ -55,8 +54,7 @@ describe('user info', () => {
     it('should get the user info for the user ID set in the request', async () => {
       await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` })
-        .set('Accept', 'application/json');
+        .send({ query: `query { getUserInfo { email } }` });
 
       expect(getUserInfo).toHaveBeenCalledWith('UserID');
     });
@@ -74,11 +72,24 @@ describe('user info', () => {
 
       await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` })
-        .set('Accept', 'application/json');
+        .send({ query: `query { getUserInfo { email } }` });
 
       expect(console.log).toHaveBeenCalledWith(
         'Get user info for test@foo.com',
+      );
+    });
+    it('should log unknown user if the email address is not set', async () => {
+      vi.spyOn(console, 'log');
+      vi.mocked(getUserInfo).mockResolvedValue({
+        email: undefined,
+      });
+
+      await request(app)
+        .post('/graphql')
+        .send({ query: `query { getUserInfo { email } }` });
+
+      expect(console.log).toHaveBeenCalledWith(
+        'Get user info for unknown user',
       );
     });
     it('should return the user info as json', async () => {
@@ -107,8 +118,7 @@ describe('user info', () => {
                 picture
               }
             }`,
-        })
-        .set('Accept', 'application/json');
+        });
 
       expect(response.body).toEqual({
         data: {
@@ -144,8 +154,7 @@ describe('user info', () => {
                 firstName
               }
             }`,
-        })
-        .set('Accept', 'application/json');
+        });
 
       expect(response.body).toEqual({
         data: {
