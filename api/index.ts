@@ -37,6 +37,7 @@ const typeDefs = gql(
 );
 
 const server = new ApolloServer<MyContext>({
+  introspection: true,
   schema: buildSubgraphSchema({ resolvers, typeDefs }),
 });
 await server.start();
