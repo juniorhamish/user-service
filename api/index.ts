@@ -1,8 +1,11 @@
 import 'dotenv/config';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { buildSubgraphSchema } from '@apollo/subgraph';
+import cors from 'cors';
 import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
-import { buildSchema } from 'graphql';
-import { createHandler } from 'graphql-http/lib/use/express';
+import { gql } from 'graphql-tag';
 import helmet from 'helmet';
 import logger from 'morgan';
 import fs from 'node:fs';
@@ -10,6 +13,10 @@ import path from 'node:path';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
 import { resolvers } from './resolvers.js';
+
+export interface MyContext {
+  userId?: string;
+}
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -23,26 +30,21 @@ app.use(logger('combined'));
 app.use(helmet());
 app.use(jwtCheck);
 app.use(express.json());
+app.use(cors());
 
-const typeDefs = fs.readFileSync(
-  path.join(path.resolve(), 'graphql/schema.graphql'),
-  'utf8',
+const typeDefs = gql(
+  fs.readFileSync(path.join(path.resolve(), 'graphql/schema.graphql'), 'utf8'),
 );
-const schema = buildSchema(typeDefs);
 
-const rootValue = {
-  getUserInfo: resolvers.Query?.getUserInfo,
-};
+const server = new ApolloServer<MyContext>({
+  schema: buildSubgraphSchema({ resolvers, typeDefs }),
+});
+await server.start();
+
 app.all(
   '/graphql',
-  createHandler({
-    context: (request) => {
-      return {
-        userId: request.raw.auth?.payload.sub,
-      };
-    },
-    rootValue,
-    schema,
+  expressMiddleware<MyContext>(server, {
+    context: ({ req }) => Promise.resolve({ userId: req.auth?.payload.sub }),
   }),
 );
 

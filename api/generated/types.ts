@@ -1,4 +1,5 @@
 import { GraphQLResolveInfo } from 'graphql';
+import { MyContext } from '../index.js';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -19,6 +20,16 @@ export type AvatarImageSource =
   | 'GRAVATAR'
   | 'MANUAL';
 
+export type Mutation = {
+  __typename?: 'Mutation';
+  updateUserInfo?: Maybe<UserInfo>;
+};
+
+
+export type MutationUpdateUserInfoArgs = {
+  input?: InputMaybe<UserInfoInput>;
+};
+
 export type Query = {
   __typename?: 'Query';
   getUserInfo?: Maybe<UserInfo>;
@@ -35,7 +46,18 @@ export type UserInfo = {
   picture?: Maybe<Scalars['String']['output']>;
 };
 
+export type UserInfoInput = {
+  avatarImageSource?: InputMaybe<AvatarImageSource>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gravatarEmailAddress?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  picture?: InputMaybe<Scalars['String']['input']>;
+};
 
+export type WithIndex<TObject> = TObject & Record<string, any>;
+export type ResolversObject<TObject> = WithIndex<TObject>;
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
 
@@ -105,27 +127,35 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 
 /** Mapping between all available schema types and the resolvers types */
-export type ResolversTypes = {
+export type ResolversTypes = ResolversObject<{
   AvatarImageSource: AvatarImageSource;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
+  Mutation: ResolverTypeWrapper<{}>;
   Query: ResolverTypeWrapper<{}>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   UserInfo: ResolverTypeWrapper<UserInfo>;
-};
+  UserInfoInput: UserInfoInput;
+}>;
 
 /** Mapping between all available schema types and the resolvers parents */
-export type ResolversParentTypes = {
+export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']['output'];
+  Mutation: {};
   Query: {};
   String: Scalars['String']['output'];
   UserInfo: UserInfo;
-};
+  UserInfoInput: UserInfoInput;
+}>;
 
-export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+export type MutationResolvers<ContextType = MyContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = ResolversObject<{
+  updateUserInfo?: Resolver<Maybe<ResolversTypes['UserInfo']>, ParentType, ContextType, Partial<MutationUpdateUserInfoArgs>>;
+}>;
+
+export type QueryResolvers<ContextType = MyContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   getUserInfo?: Resolver<Maybe<ResolversTypes['UserInfo']>, ParentType, ContextType>;
-};
+}>;
 
-export type UserInfoResolvers<ContextType = any, ParentType extends ResolversParentTypes['UserInfo'] = ResolversParentTypes['UserInfo']> = {
+export type UserInfoResolvers<ContextType = MyContext, ParentType extends ResolversParentTypes['UserInfo'] = ResolversParentTypes['UserInfo']> = ResolversObject<{
   avatarImageSource?: Resolver<Maybe<ResolversTypes['AvatarImageSource']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   firstName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -134,10 +164,11 @@ export type UserInfoResolvers<ContextType = any, ParentType extends ResolversPar
   nickname?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   picture?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
+}>;
 
-export type Resolvers<ContextType = any> = {
+export type Resolvers<ContextType = MyContext> = ResolversObject<{
+  Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   UserInfo?: UserInfoResolvers<ContextType>;
-};
+}>;
 
