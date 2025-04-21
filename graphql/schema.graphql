@@ -1,5 +1,9 @@
+enum AvatarImageSource {
+  GRAVATAR
+  MANUAL
+}
 type UserInfo {
-  avatarImageSource: String
+  avatarImageSource: AvatarImageSource
   email: String
   firstName: String
   gravatarEmailAddress: String

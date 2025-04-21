@@ -61,7 +61,7 @@ describe('user info', () => {
     it('should log the users email address', async () => {
       vi.spyOn(console, 'log');
       vi.mocked(getUserInfo).mockResolvedValue({
-        avatarImageSource: '',
+        avatarImageSource: 'MANUAL',
         email: 'test@foo.com',
         firstName: '',
         gravatarEmailAddress: '',
@@ -94,7 +94,7 @@ describe('user info', () => {
     });
     it('should return the user info as json', async () => {
       vi.mocked(getUserInfo).mockResolvedValue({
-        avatarImageSource: 'A',
+        avatarImageSource: 'GRAVATAR',
         email: 'B',
         firstName: 'C',
         gravatarEmailAddress: 'D',
@@ -123,7 +123,7 @@ describe('user info', () => {
       expect(response.body).toEqual({
         data: {
           getUserInfo: {
-            avatarImageSource: 'A',
+            avatarImageSource: 'GRAVATAR',
             email: 'B',
             firstName: 'C',
             gravatarEmailAddress: 'D',
@@ -136,7 +136,7 @@ describe('user info', () => {
     });
     it('should return only the requested fields', async () => {
       vi.mocked(getUserInfo).mockResolvedValue({
-        avatarImageSource: 'A',
+        avatarImageSource: 'MANUAL',
         email: 'B',
         firstName: 'C',
         gravatarEmailAddress: 'D',
