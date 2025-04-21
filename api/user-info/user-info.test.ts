@@ -24,7 +24,7 @@ describe('user info', () => {
     it('should throw an error if the user ID has not been set in the request', async () => {
       const response = await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` });
+        .send({ query: '{ getUserInfo { email } }' });
 
       expect(response.body).toEqual(
         expect.objectContaining({
@@ -54,7 +54,7 @@ describe('user info', () => {
     it('should get the user info for the user ID set in the request', async () => {
       await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` });
+        .send({ query: '{ getUserInfo { email } }' });
 
       expect(getUserInfo).toHaveBeenCalledWith('UserID');
     });
@@ -72,7 +72,7 @@ describe('user info', () => {
 
       await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` });
+        .send({ query: '{ getUserInfo { email } }' });
 
       expect(console.log).toHaveBeenCalledWith(
         'Get user info for test@foo.com',
@@ -86,7 +86,7 @@ describe('user info', () => {
 
       await request(app)
         .post('/graphql')
-        .send({ query: `query { getUserInfo { email } }` });
+        .send({ query: '{ getUserInfo { email } }' });
 
       expect(console.log).toHaveBeenCalledWith(
         'Get user info for unknown user',
@@ -107,7 +107,7 @@ describe('user info', () => {
         .post('/graphql')
         .send({
           query: `
-            query {
+            {
               getUserInfo {
                 avatarImageSource
                 email
@@ -149,7 +149,7 @@ describe('user info', () => {
         .post('/graphql')
         .send({
           query: `
-            query {
+            {
               getUserInfo {
                 firstName
               }
