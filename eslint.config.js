@@ -2,6 +2,7 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import perfectionist from 'eslint-plugin-perfectionist';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import vitest from '@vitest/eslint-plugin';
 
 export default tseslint.config(
   {
@@ -28,4 +29,17 @@ export default tseslint.config(
     },
   },
   eslintConfigPrettier,
+  {
+    ...vitest.configs.recommended,
+    settings: {
+      vitest: {
+        typecheck: true,
+      },
+    },
+    languageOptions: {
+      globals: {
+        ...vitest.environments.env.globals,
+      },
+    },
+  },
 );
