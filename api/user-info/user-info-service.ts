@@ -1,6 +1,6 @@
 import { ManagementClient } from 'auth0';
 
-import { UserInfo } from '../generated/types.js';
+import { AvatarImageSource, UserInfo } from '../generated/types.js';
 
 const management = new ManagementClient({
   clientId: process.env.AUTH0_CLIENT_ID ?? '',
@@ -16,7 +16,7 @@ const getUserInfo = async (userId: string): Promise<UserInfo> => {
     result.data;
   return {
     avatarImageSource: (user_metadata.avatarImageSource ??
-      'GRAVATAR') as string,
+      'GRAVATAR') as AvatarImageSource,
     email,
     firstName: (user_metadata.firstName ?? given_name) as string,
     gravatarEmailAddress: (user_metadata.gravatarEmailAddress ??

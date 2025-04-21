@@ -15,6 +15,10 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type AvatarImageSource =
+  | 'GRAVATAR'
+  | 'MANUAL';
+
 export type Query = {
   __typename?: 'Query';
   getUserInfo?: Maybe<UserInfo>;
@@ -22,7 +26,7 @@ export type Query = {
 
 export type UserInfo = {
   __typename?: 'UserInfo';
-  avatarImageSource?: Maybe<Scalars['String']['output']>;
+  avatarImageSource?: Maybe<AvatarImageSource>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   gravatarEmailAddress?: Maybe<Scalars['String']['output']>;
@@ -102,6 +106,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  AvatarImageSource: AvatarImageSource;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Query: ResolverTypeWrapper<{}>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
@@ -121,7 +126,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
 };
 
 export type UserInfoResolvers<ContextType = any, ParentType extends ResolversParentTypes['UserInfo'] = ResolversParentTypes['UserInfo']> = {
-  avatarImageSource?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  avatarImageSource?: Resolver<Maybe<ResolversTypes['AvatarImageSource']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   firstName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   gravatarEmailAddress?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
