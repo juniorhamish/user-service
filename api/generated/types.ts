@@ -48,7 +48,6 @@ export type UserInfo = {
 
 export type UserInfoInput = {
   avatarImageSource?: InputMaybe<AvatarImageSource>;
-  email?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gravatarEmailAddress?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
