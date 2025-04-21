@@ -31,7 +31,7 @@ const typeDefs = fs.readFileSync(
 const schema = buildSchema(typeDefs);
 
 const rootValue = {
-  getUserInfo: resolvers.Query?.getUserInfo,
+  getUserInfo: resolvers.Query.getUserInfo,
 };
 app.all(
   '/graphql',

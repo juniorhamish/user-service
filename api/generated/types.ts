@@ -21,18 +21,18 @@ export type AvatarImageSource =
 
 export type Query = {
   __typename?: 'Query';
-  getUserInfo?: Maybe<UserInfo>;
+  getUserInfo: Maybe<UserInfo>;
 };
 
 export type UserInfo = {
   __typename?: 'UserInfo';
-  avatarImageSource?: Maybe<AvatarImageSource>;
-  email?: Maybe<Scalars['String']['output']>;
-  firstName?: Maybe<Scalars['String']['output']>;
-  gravatarEmailAddress?: Maybe<Scalars['String']['output']>;
-  lastName?: Maybe<Scalars['String']['output']>;
-  nickname?: Maybe<Scalars['String']['output']>;
-  picture?: Maybe<Scalars['String']['output']>;
+  avatarImageSource: Maybe<AvatarImageSource>;
+  email: Maybe<Scalars['String']['output']>;
+  firstName: Maybe<Scalars['String']['output']>;
+  gravatarEmailAddress: Maybe<Scalars['String']['output']>;
+  lastName: Maybe<Scalars['String']['output']>;
+  nickname: Maybe<Scalars['String']['output']>;
+  picture: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -122,22 +122,22 @@ export type ResolversParentTypes = {
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  getUserInfo?: Resolver<Maybe<ResolversTypes['UserInfo']>, ParentType, ContextType>;
+  getUserInfo: Resolver<Maybe<ResolversTypes['UserInfo']>, ParentType, ContextType>;
 };
 
 export type UserInfoResolvers<ContextType = any, ParentType extends ResolversParentTypes['UserInfo'] = ResolversParentTypes['UserInfo']> = {
-  avatarImageSource?: Resolver<Maybe<ResolversTypes['AvatarImageSource']>, ParentType, ContextType>;
-  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  firstName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  gravatarEmailAddress?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  lastName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  nickname?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  picture?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  avatarImageSource: Resolver<Maybe<ResolversTypes['AvatarImageSource']>, ParentType, ContextType>;
+  email: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  firstName: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  gravatarEmailAddress: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  lastName: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  nickname: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  picture: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = any> = {
-  Query?: QueryResolvers<ContextType>;
-  UserInfo?: UserInfoResolvers<ContextType>;
+  Query: QueryResolvers<ContextType>;
+  UserInfo: UserInfoResolvers<ContextType>;
 };
 

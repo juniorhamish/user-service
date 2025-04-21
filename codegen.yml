@@ -5,4 +5,5 @@ generates:
       - typescript
       - typescript-resolvers
     config:
+      avoidOptionals: true
       enumsAsTypes: true
