@@ -1,6 +1,14 @@
-import { ManagementClient } from 'auth0';
+import {
+  ApiResponse,
+  GetUsers200ResponseOneOfInner,
+  ManagementClient,
+} from 'auth0';
 
-import { AvatarImageSource, UserInfo } from '../generated/types.js';
+import {
+  AvatarImageSource,
+  UserInfo,
+  UserInfoInput,
+} from '../generated/types.js';
 
 const management = new ManagementClient({
   clientId: process.env.AUTH0_CLIENT_ID ?? '',
@@ -8,23 +16,52 @@ const management = new ManagementClient({
   domain: process.env.AUTH0_DOMAIN ?? '',
 });
 
-const getUserInfo = async (userId: string): Promise<UserInfo> => {
-  const result = await management.users.get({
-    id: userId,
-  });
+const buildResponse = (
+  result: ApiResponse<GetUsers200ResponseOneOfInner>,
+): UserInfo => {
   const { email, family_name, given_name, nickname, picture, user_metadata } =
     result.data;
   return {
     avatarImageSource: (user_metadata.avatarImageSource ??
       'GRAVATAR') as AvatarImageSource,
     email,
-    firstName: (user_metadata.firstName ?? given_name) as string,
+    firstName: given_name,
     gravatarEmailAddress: (user_metadata.gravatarEmailAddress ??
       email) as string,
-    lastName: (user_metadata.lastName ?? family_name) as string,
-    nickname: (user_metadata.nickname ?? nickname) as string,
-    picture: (user_metadata.picture ?? picture) as string,
+    lastName: family_name,
+    nickname,
+    picture,
   };
 };
 
-export default getUserInfo;
+const getUserInfo = async (userId: string): Promise<UserInfo> => {
+  const result = await management.users.get({
+    id: userId,
+  });
+  return buildResponse(result);
+};
+const updateUserInfo = async (
+  userId: string,
+  {
+    avatarImageSource,
+    firstName,
+    gravatarEmailAddress,
+    lastName,
+    nickname,
+    picture,
+  }: UserInfoInput,
+): Promise<UserInfo> => {
+  const result = await management.users.update(
+    { id: userId },
+    {
+      family_name: lastName,
+      given_name: firstName,
+      nickname,
+      picture,
+      user_metadata: { avatarImageSource, gravatarEmailAddress },
+    },
+  );
+  return buildResponse(result);
+};
+
+export { getUserInfo, updateUserInfo };

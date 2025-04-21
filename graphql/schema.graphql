@@ -11,6 +11,17 @@ type UserInfo {
   nickname: String
   picture: String
 }
+input UserInfoInput {
+  avatarImageSource: AvatarImageSource
+  firstName: String
+  gravatarEmailAddress: String
+  lastName: String
+  nickname: String
+  picture: String
+}
 type Query {
   getUserInfo: UserInfo
+}
+type Mutation {
+  updateUserInfo(input: UserInfoInput): UserInfo
 }
