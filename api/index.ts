@@ -28,9 +28,9 @@ const app = express();
 
 app.use(logger('combined'));
 app.use(helmet());
+app.use(cors());
 app.use(jwtCheck);
 app.use(express.json());
-app.use(cors());
 
 const typeDefs = gql(
   fs.readFileSync(path.join(path.resolve(), 'graphql/schema.graphql'), 'utf8'),
