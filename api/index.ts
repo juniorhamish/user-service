@@ -1,22 +1,14 @@
 import 'dotenv/config';
-import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { buildSubgraphSchema } from '@apollo/subgraph';
 import cors from 'cors';
 import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
-import { gql } from 'graphql-tag';
+import OpenApiValidator from 'express-openapi-validator';
 import helmet from 'helmet';
 import logger from 'morgan';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
-import { resolvers } from './resolvers.js';
-
-export interface MyContext {
-  userId?: string;
-}
+import userInfoRouter from './routes/user-info.js';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -26,32 +18,27 @@ const jwtCheck = auth({
 
 const app = express();
 
+app.use('/spec', express.static(path.join(path.resolve(), 'api-spec')));
 app.use(logger('combined'));
 app.use(helmet());
 app.use(cors());
 app.use(jwtCheck);
 app.use(express.json());
 
-const typeDefs = gql(
-  fs.readFileSync(path.join(path.resolve(), 'graphql/schema.graphql'), 'utf8'),
-);
-
-const server = new ApolloServer<MyContext>({
-  introspection: true,
-  schema: buildSubgraphSchema({ resolvers, typeDefs }),
-});
-await server.start();
-
-app.all(
-  '/graphql',
-  expressMiddleware<MyContext>(server, {
-    context: ({ req }) => Promise.resolve({ userId: req.auth?.payload.sub }),
+app.use(
+  OpenApiValidator.middleware({
+    apiSpec: path.join(path.resolve(), 'api-spec/openapi.yml'),
+    validateRequests: true,
+    validateResponses: true,
   }),
 );
 
+// Routes
+app.use('/api/v1/user-info', userInfoRouter);
 // Error handlers
 app.use(generalErrorHandler, notFoundHandler);
 
+/* v8 ignore next */
 const port = process.env.PORT ?? '3000';
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);

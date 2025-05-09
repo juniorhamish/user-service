@@ -6,7 +6,7 @@ import vitest from '@vitest/eslint-plugin';
 
 export default tseslint.config(
   {
-    ignores: ['api/generated', 'coverage', 'eslint.config.js'],
+    ignores: ['coverage', 'eslint.config.js'],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,

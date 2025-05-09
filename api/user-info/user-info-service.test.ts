@@ -1,7 +1,11 @@
 import { ManagementClient } from 'auth0';
 import { Mock } from 'vitest';
 
-import { UserInfo, UserInfoInput } from '../generated/types.js';
+import {
+  AvatarImageSource,
+  PatchUserInfo,
+  UserInfo,
+} from '../types/UserInfo.js';
 
 const mockedAuth0Client = vi.hoisted(() => ({
   users: {
@@ -28,6 +32,9 @@ describe('user info service', () => {
   });
   describe('instantiation', () => {
     it('should pass default values to the management client if not set in the environment variables', async () => {
+      vi.stubEnv('AUTH0_CLIENT_ID', undefined);
+      vi.stubEnv('AUTH0_CLIENT_SECRET', undefined);
+      vi.stubEnv('AUTH0_DOMAIN', undefined);
       await import('./user-info-service.js');
 
       expect(vi.mocked(ManagementClient)).toHaveBeenCalledWith({
@@ -184,7 +191,7 @@ describe('user info service', () => {
   describe('updateUserInfo', () => {
     let updateUserInfo: (
       userId: string,
-      input: UserInfoInput,
+      input: PatchUserInfo,
     ) => Promise<UserInfo>;
     beforeEach(async () => {
       updateUserInfo = (await import('./user-info-service.js')).updateUserInfo;
@@ -234,7 +241,9 @@ describe('user info service', () => {
       );
     });
     it('should update the avatar image source in the meta_data using the source from the request', async () => {
-      await updateUserInfo('UserID', { avatarImageSource: 'MANUAL' });
+      await updateUserInfo('UserID', {
+        avatarImageSource: AvatarImageSource.MANUAL,
+      });
 
       expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
         { id: 'UserID' },

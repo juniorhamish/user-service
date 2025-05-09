@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { InvalidRequestError } from 'express-oauth2-jwt-bearer';
+import { HttpError } from 'http-errors';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
 
@@ -13,7 +13,7 @@ describe('error handling', () => {
   });
   describe('general errors', () => {
     it('should set the status code according to the error', () => {
-      const error = { status: 404 } as InvalidRequestError;
+      const error = { status: 404 } as HttpError;
 
       generalErrorHandler(error, {} as Request, response as Response, vi.fn());
 
@@ -22,19 +22,21 @@ describe('error handling', () => {
     it('should respond with the error message as a json object', () => {
       const error = {
         message: 'This is the error message.',
-      } as InvalidRequestError;
+        status: 400,
+      } as HttpError;
 
       generalErrorHandler(error, {} as Request, response as Response, vi.fn());
 
       expect(response.json).toHaveBeenCalledWith({
-        error: 'This is the error message.',
+        code: 400,
+        message: 'This is the error message.',
       });
     });
     it('should log the error message', () => {
       vi.spyOn(console, 'log');
       const error = {
         message: 'This is the error message.',
-      } as InvalidRequestError;
+      } as HttpError;
 
       generalErrorHandler(error, {} as Request, response as Response, vi.fn());
 
@@ -51,7 +53,8 @@ describe('error handling', () => {
       notFoundHandler({ path: '/not-found' } as Request, response as Response);
 
       expect(response.json).toHaveBeenCalledWith({
-        error: '/not-found Not Found',
+        code: 404,
+        message: '/not-found Not Found',
       });
     });
   });

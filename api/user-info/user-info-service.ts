@@ -6,9 +6,9 @@ import {
 
 import {
   AvatarImageSource,
+  PatchUserInfo,
   UserInfo,
-  UserInfoInput,
-} from '../generated/types.js';
+} from '../types/UserInfo.js';
 
 const management = new ManagementClient({
   clientId: process.env.AUTH0_CLIENT_ID ?? '',
@@ -49,7 +49,7 @@ const updateUserInfo = async (
     lastName,
     nickname,
     picture,
-  }: UserInfoInput,
+  }: PatchUserInfo,
 ): Promise<UserInfo> => {
   const result = await management.users.update(
     { id: userId },

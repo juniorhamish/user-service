@@ -1,16 +1,20 @@
 import { NextFunction, Request, Response } from 'express';
-import { InvalidRequestError } from 'express-oauth2-jwt-bearer';
+import { HttpError } from 'http-errors';
 
 export const generalErrorHandler = (
-  error: InvalidRequestError,
+  error: HttpError,
   _request: Request,
   response: Response,
   _next: NextFunction,
 ) => {
   console.log(error.message);
-  response.status(error.status).json({ error: error.message });
+  response
+    .status(error.status)
+    .json({ code: error.status, message: error.message });
 };
 
 export const notFoundHandler = (request: Request, response: Response) => {
-  response.status(404).json({ error: `${request.path} Not Found` });
+  response
+    .status(404)
+    .json({ code: 404, message: `${request.path} Not Found` });
 };

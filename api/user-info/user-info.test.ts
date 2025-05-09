@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 
 import app from '../index.js';
+import { AvatarImageSource, UserInfo } from '../types/UserInfo.js';
 import { getUserInfo, updateUserInfo } from './user-info-service.js';
 
 const authMiddleware = vi.hoisted(() => vi.fn());
@@ -23,34 +24,24 @@ describe('user info', () => {
     });
     describe('getUserInfo', () => {
       it('should throw an error if the user ID has not been set in the request', async () => {
-        const response = await request(app)
-          .post('/graphql')
-          .send({ query: '{ getUserInfo { email } }' });
+        const response = await request(app).get('/api/v1/user-info').send();
 
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            errors: expect.arrayContaining([
-              expect.objectContaining({ message: 'Invalid credentials' }),
-            ]),
-          }),
-        );
+        expect(response.body).toEqual({
+          code: 401,
+          message: 'Invalid credentials',
+        });
       });
     });
     describe('updateUserInfo', () => {
       it('should throw an error if the user ID has not been set in the request', async () => {
         const response = await request(app)
-          .post('/graphql')
-          .send({ query: 'mutation { updateUserInfo(input: {}) { email } }' });
+          .patch('/api/v1/user-info')
+          .send({ firstName: 'David' });
 
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            errors: expect.arrayContaining([
-              expect.objectContaining({ message: 'Invalid credentials' }),
-            ]),
-          }),
-        );
+        expect(response.body).toEqual({
+          code: 401,
+          message: 'Invalid credentials',
+        });
       });
     });
   });
@@ -68,12 +59,12 @@ describe('user info', () => {
           next();
         },
       );
+      vi.mocked(updateUserInfo).mockResolvedValue({} as UserInfo);
     });
     describe('getUserInfo', () => {
       it('should get the user info for the user ID set in the request', async () => {
-        await request(app)
-          .post('/graphql')
-          .send({ query: '{ getUserInfo { email } }' });
+        vi.mocked(getUserInfo).mockResolvedValue({} as UserInfo);
+        await request(app).get('/api/v1/user-info').send();
 
         expect(getUserInfo).toHaveBeenCalledWith('UserID');
       });
@@ -81,32 +72,28 @@ describe('user info', () => {
         vi.spyOn(console, 'log');
         vi.mocked(getUserInfo).mockResolvedValue({
           email: 'test@foo.com',
-        });
+        } as UserInfo);
 
-        await request(app)
-          .post('/graphql')
-          .send({ query: '{ getUserInfo { email } }' });
+        await request(app).get('/api/v1/user-info').send();
 
         expect(console.log).toHaveBeenCalledWith(
-          'Get user info for test@foo.com',
-        );
-      });
-      it('should log unknown user if the email address is not set', async () => {
-        vi.spyOn(console, 'log');
-        vi.mocked(getUserInfo).mockResolvedValue({
-          email: undefined,
-        });
-
-        await request(app)
-          .post('/graphql')
-          .send({ query: '{ getUserInfo { email } }' });
-
-        expect(console.log).toHaveBeenCalledWith(
-          'Get user info for unknown user',
+          'Handle user info for test@foo.com',
         );
       });
       it('should return the user info as json', async () => {
         vi.mocked(getUserInfo).mockResolvedValue({
+          avatarImageSource: AvatarImageSource.GRAVATAR,
+          email: 'B',
+          firstName: 'C',
+          gravatarEmailAddress: 'D',
+          lastName: 'E',
+          nickname: 'F',
+          picture: 'G',
+        });
+
+        const response = await request(app).get('/api/v1/user-info').send();
+
+        expect(response.body).toEqual({
           avatarImageSource: 'GRAVATAR',
           email: 'B',
           firstName: 'C',
@@ -115,89 +102,21 @@ describe('user info', () => {
           nickname: 'F',
           picture: 'G',
         });
-
-        const response = await request(app)
-          .post('/graphql')
-          .send({
-            query: `
-            {
-              getUserInfo {
-                avatarImageSource
-                email
-                firstName
-                gravatarEmailAddress
-                lastName
-                nickname
-                picture
-              }
-            }`,
-          });
-
-        expect(response.body).toEqual({
-          data: {
-            getUserInfo: {
-              avatarImageSource: 'GRAVATAR',
-              email: 'B',
-              firstName: 'C',
-              gravatarEmailAddress: 'D',
-              lastName: 'E',
-              nickname: 'F',
-              picture: 'G',
-            },
-          },
-        });
-      });
-      it('should return only the requested fields', async () => {
-        vi.mocked(getUserInfo).mockResolvedValue({
-          avatarImageSource: 'MANUAL',
-          email: 'B',
-          firstName: 'C',
-          gravatarEmailAddress: 'D',
-          lastName: 'E',
-          nickname: 'F',
-          picture: 'G',
-        });
-
-        const response = await request(app)
-          .post('/graphql')
-          .send({
-            query: `
-            {
-              getUserInfo {
-                firstName
-              }
-            }`,
-          });
-
-        expect(response.body).toEqual({
-          data: {
-            getUserInfo: {
-              firstName: 'C',
-            },
-          },
-        });
       });
     });
     describe('updateUserInfo', () => {
       it('should throw an error if the input is not supplied', async () => {
-        const response = await request(app).post('/graphql').send({
-          query: 'mutation { updateUserInfo { email } }',
-        });
+        const response = await request(app).patch('/api/v1/user-info').send({});
 
-        expect(response.body).toEqual(
-          expect.objectContaining({
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            errors: expect.arrayContaining([
-              expect.objectContaining({ message: 'Invalid input' }),
-            ]),
-          }),
-        );
+        expect(response.body).toEqual({
+          code: 400,
+          message: 'request/body must NOT have fewer than 1 properties',
+        });
       });
       it('should update the user info for the user ID set in the request', async () => {
-        await request(app).post('/graphql').send({
-          query:
-            'mutation { updateUserInfo(input: { firstName: "David" }) { email } }',
-        });
+        await request(app)
+          .patch('/api/v1/user-info')
+          .send({ firstName: 'David' });
 
         expect(updateUserInfo).toHaveBeenCalledWith(
           'UserID',
@@ -208,32 +127,32 @@ describe('user info', () => {
         vi.spyOn(console, 'log');
         vi.mocked(updateUserInfo).mockResolvedValue({
           email: 'test@foo.com',
-        });
+        } as UserInfo);
 
         await request(app)
-          .post('/graphql')
-          .send({ query: 'mutation { updateUserInfo(input: {}) { email } }' });
+          .patch('/api/v1/user-info')
+          .send({ lastName: 'Johnston' });
 
         expect(console.log).toHaveBeenCalledWith(
-          'Update user info for test@foo.com',
-        );
-      });
-      it('should log unknown user if the email address is not set', async () => {
-        vi.spyOn(console, 'log');
-        vi.mocked(updateUserInfo).mockResolvedValue({
-          email: undefined,
-        });
-
-        await request(app)
-          .post('/graphql')
-          .send({ query: 'mutation { updateUserInfo(input: {}) { email } }' });
-
-        expect(console.log).toHaveBeenCalledWith(
-          'Update user info for unknown user',
+          'Handle user info for test@foo.com',
         );
       });
       it('should return the updated user info as json', async () => {
         vi.mocked(updateUserInfo).mockResolvedValue({
+          avatarImageSource: AvatarImageSource.GRAVATAR,
+          email: 'B',
+          firstName: 'C',
+          gravatarEmailAddress: 'D',
+          lastName: 'E',
+          nickname: 'F',
+          picture: 'G',
+        });
+
+        const response = await request(app)
+          .patch('/api/v1/user-info')
+          .send({ firstName: 'David' });
+
+        expect(response.body).toEqual({
           avatarImageSource: 'GRAVATAR',
           email: 'B',
           firstName: 'C',
@@ -241,67 +160,6 @@ describe('user info', () => {
           lastName: 'E',
           nickname: 'F',
           picture: 'G',
-        });
-
-        const response = await request(app)
-          .post('/graphql')
-          .send({
-            query: `
-            mutation {
-              updateUserInfo(input: {} ) {
-                avatarImageSource
-                email
-                firstName
-                gravatarEmailAddress
-                lastName
-                nickname
-                picture
-              }
-            }`,
-          });
-
-        expect(response.body).toEqual({
-          data: {
-            updateUserInfo: {
-              avatarImageSource: 'GRAVATAR',
-              email: 'B',
-              firstName: 'C',
-              gravatarEmailAddress: 'D',
-              lastName: 'E',
-              nickname: 'F',
-              picture: 'G',
-            },
-          },
-        });
-      });
-      it('should return only the requested fields', async () => {
-        vi.mocked(updateUserInfo).mockResolvedValue({
-          avatarImageSource: 'MANUAL',
-          email: 'B',
-          firstName: 'C',
-          gravatarEmailAddress: 'D',
-          lastName: 'E',
-          nickname: 'F',
-          picture: 'G',
-        });
-
-        const response = await request(app)
-          .post('/graphql')
-          .send({
-            query: `
-            mutation {
-              updateUserInfo(input: {}) {
-                firstName
-              }
-            }`,
-          });
-
-        expect(response.body).toEqual({
-          data: {
-            updateUserInfo: {
-              firstName: 'C',
-            },
-          },
         });
       });
     });
