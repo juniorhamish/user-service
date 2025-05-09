@@ -21,7 +21,7 @@ const app = express();
 app.use('/spec', express.static(path.join(path.resolve(), 'api-spec')));
 app.use(logger('combined'));
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: 'https://www.dajohnston.co.uk/' }));
 app.use(jwtCheck);
 app.use(express.json());
 
