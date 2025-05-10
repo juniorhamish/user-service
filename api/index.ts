@@ -18,7 +18,6 @@ const jwtCheck = auth({
 
 const app = express();
 
-app.use('/spec', express.static(path.join(path.resolve(), 'api-spec')));
 app.use(logger('combined'));
 app.use(helmet());
 app.use(
@@ -26,6 +25,7 @@ app.use(
     origin: ['https://www.dajohnston.co.uk', 'http://localhost:5173'],
   }),
 );
+app.use('/spec', express.static(path.join(path.resolve(), 'api-spec')));
 app.use(jwtCheck);
 app.use(express.json());
 
