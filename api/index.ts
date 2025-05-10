@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import cors from 'cors';
 import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 import OpenApiValidator from 'express-openapi-validator';
@@ -20,6 +21,11 @@ const app = express();
 app.use('/spec', express.static(path.join(path.resolve(), 'api-spec')));
 app.use(logger('combined'));
 app.use(helmet());
+app.use(
+  cors({
+    origin: ['https://www.dajohnston.co.uk', 'http://localhost:5173'],
+  }),
+);
 app.use(jwtCheck);
 app.use(express.json());
 
