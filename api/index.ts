@@ -22,7 +22,13 @@ app.use('/spec', express.static(path.join(path.resolve(), 'api-spec')));
 app.use(logger('combined'));
 app.use(helmet());
 app.use(
-  cors({ origin: ['https://www.dajohnston.co.uk', 'http://localhost:5173'] }),
+  cors({
+    origin: [
+      'https://www.dajohnston.co.uk',
+      'http://localhost:5173',
+      'https://generator.swagger.io',
+    ],
+  }),
 );
 app.use(jwtCheck);
 app.use(express.json());
