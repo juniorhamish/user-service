@@ -26,6 +26,7 @@ app.use(
       'https://www.dajohnston.co.uk',
       'http://localhost:5173',
       'https://generator.swagger.io',
+      'https://*.vercel.app',
     ],
   }),
 );
