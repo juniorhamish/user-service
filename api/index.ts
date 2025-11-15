@@ -25,6 +25,7 @@ app.use(
     origin: [
       'https://www.dajohnston.co.uk',
       'http://localhost:5173',
+      'http://localhost:5174',
       'https://generator.swagger.io',
       /^https:\/\/.*\.vercel\.app$/,
     ],
