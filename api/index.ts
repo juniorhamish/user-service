@@ -1,11 +1,11 @@
 import 'dotenv/config';
+import path from 'node:path';
 import cors from 'cors';
 import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 import OpenApiValidator from 'express-openapi-validator';
 import helmet from 'helmet';
 import logger from 'morgan';
-import path from 'node:path';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
 import userInfoRouter from './routes/user-info.js';
@@ -49,7 +49,7 @@ app.use('/api/v1/user-info', userInfoRouter);
 app.use(generalErrorHandler, notFoundHandler);
 
 /* v8 ignore next */
-const port = process.env.PORT ?? '3000';
+const port = process.env.PORT;
 app.listen(port, () => {
   console.log(`Listening on port ${port}`);
 });

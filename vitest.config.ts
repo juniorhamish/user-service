@@ -1,13 +1,11 @@
-import { coverageConfigDefaults, defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  resolve: {
-    extensions: ['.js', '.mjs', '.ts', '.mts'],
-  },
   test: {
     coverage: {
-      exclude: ['api/generated', ...coverageConfigDefaults.exclude],
-      reporter: ['text', 'json-summary', 'json', 'html'],
+      provider: 'v8',
+      exclude: ['api/generated'],
+      reporter: ['text', 'json-summary', 'json', 'html', 'clover', 'lcov'],
       reportOnFailure: true,
       thresholds: {
         branches: 100,
@@ -16,6 +14,7 @@ export default defineConfig({
         statements: 100,
       },
     },
+    environment: 'node',
     globals: true,
   },
 });

@@ -1,15 +1,10 @@
-import express, {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-} from 'express';
+import { type NextFunction, type Request, type RequestHandler, type Response, Router } from 'express';
 import { UnauthorizedError } from 'express-oauth2-jwt-bearer';
 
-import { PatchUserInfo, UserInfo } from '../types/UserInfo.js';
+import type { PatchUserInfo, UserInfo } from '../types/UserInfo.js';
 import { getUserInfo, updateUserInfo } from '../user-info/user-info-service.js';
 
-const router = express.Router();
+const router = Router();
 
 const handleRequest = async (
   request: Request<Record<string, unknown>, unknown, PatchUserInfo | UserInfo>,
@@ -26,22 +21,20 @@ const handleRequest = async (
   }
 };
 
-router.get('/', async function (
+router.get('/', (async (
   request: Request<Record<string, unknown>, unknown, UserInfo>,
   response: Response,
   next: NextFunction,
-) {
+) => {
   await handleRequest(request, response, next, (userId) => getUserInfo(userId));
-} as RequestHandler);
+}) as RequestHandler);
 
-router.patch('/', async function (
+router.patch('/', (async (
   request: Request<Record<string, unknown>, unknown, PatchUserInfo>,
   response: Response,
   next: NextFunction,
-) {
-  await handleRequest(request, response, next, (userId) =>
-    updateUserInfo(userId, request.body),
-  );
-} as RequestHandler);
+) => {
+  await handleRequest(request, response, next, (userId) => updateUserInfo(userId, request.body));
+}) as RequestHandler);
 
 export default router;
