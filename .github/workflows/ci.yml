@@ -12,9 +12,9 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -27,7 +27,5 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
       - name: Run TypeScript type checking
         run: npm run type-check
-      - name: Run ESLint
-        run: npm run lint
-      - name: Check prettier formatting
-        run: npm run prettier:check
+      - name: Run Biome
+        run: npm run check
