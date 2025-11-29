@@ -1,29 +1,27 @@
 import { ManagementClient } from 'auth0';
-import { Mock } from 'vitest';
+import type { Mock } from 'vitest';
 
-import {
-  AvatarImageSource,
-  PatchUserInfo,
-  UserInfo,
-} from '../types/UserInfo.js';
+import { AvatarImageSource, type PatchUserInfo, type UserInfo } from '../types/UserInfo.js';
 
 const mockedAuth0Client = vi.hoisted(() => ({
-  users: {
-    get: vi.fn().mockResolvedValue({
-      data: {
-        user_metadata: {},
-      },
-    }),
-    update: vi.fn().mockResolvedValue({
-      data: {
-        user_metadata: {},
-      },
-    }),
-  },
+  get: vi.fn().mockResolvedValue({
+    data: {
+      user_metadata: {},
+    },
+  }),
+  update: vi.fn().mockResolvedValue({
+    data: {
+      user_metadata: {},
+    },
+  }),
 }));
 
 vi.mock('auth0', () => ({
-  ManagementClient: vi.fn().mockReturnValue(mockedAuth0Client),
+  ManagementClient: vi.fn(
+    class {
+      users = mockedAuth0Client;
+    },
+  ),
 }));
 
 describe('user info service', () => {
@@ -68,14 +66,12 @@ describe('user info service', () => {
       const auth0Client = vi.mocked(ManagementClient).mock.results[0].value as {
         users: { get: Mock };
       };
-      expect(auth0Client.users.get).toHaveBeenCalledWith({ id: 'UserID' });
+      expect(auth0Client.users.get).toHaveBeenCalledWith('UserID');
     });
     it('should set the firstName from the base response', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          given_name: 'David',
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        given_name: 'David',
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
@@ -83,39 +79,29 @@ describe('user info service', () => {
       expect(userInfo).toEqual(expect.objectContaining({ firstName: 'David' }));
     });
     it('should set the lastName from the base response', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          family_name: 'Johnston',
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        family_name: 'Johnston',
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
 
-      expect(userInfo).toEqual(
-        expect.objectContaining({ lastName: 'Johnston' }),
-      );
+      expect(userInfo).toEqual(expect.objectContaining({ lastName: 'Johnston' }));
     });
     it('should set the email from the base response', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          email: 'test@foo.com',
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        email: 'test@foo.com',
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
 
-      expect(userInfo).toEqual(
-        expect.objectContaining({ email: 'test@foo.com' }),
-      );
+      expect(userInfo).toEqual(expect.objectContaining({ email: 'test@foo.com' }));
     });
     it('should set the nickname from the base response', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          nickname: 'DJ',
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        nickname: 'DJ',
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
@@ -123,11 +109,9 @@ describe('user info service', () => {
       expect(userInfo).toEqual(expect.objectContaining({ nickname: 'DJ' }));
     });
     it('should set the picture from the base response', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          picture: 'picture',
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        picture: 'picture',
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
@@ -135,134 +119,97 @@ describe('user info service', () => {
       expect(userInfo).toEqual(expect.objectContaining({ picture: 'picture' }));
     });
     it('should set the gravatarEmailAddress from the metadata if it is present', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          user_metadata: { gravatarEmailAddress: 'gravatar' },
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        user_metadata: { gravatarEmailAddress: 'gravatar' },
       });
 
       const userInfo = await getUserInfo('');
 
-      expect(userInfo).toEqual(
-        expect.objectContaining({ gravatarEmailAddress: 'gravatar' }),
-      );
+      expect(userInfo).toEqual(expect.objectContaining({ gravatarEmailAddress: 'gravatar' }));
     });
     it('should set the gravatarEmailAddress from the email if it is not present in the metadata', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          email: 'base_email',
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        email: 'base_email',
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
 
-      expect(userInfo).toEqual(
-        expect.objectContaining({ gravatarEmailAddress: 'base_email' }),
-      );
+      expect(userInfo).toEqual(expect.objectContaining({ gravatarEmailAddress: 'base_email' }));
     });
     it('should set the avatarImageSource from the metadata if it is present', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          user_metadata: { avatarImageSource: 'MANUAL' },
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        user_metadata: { avatarImageSource: 'MANUAL' },
       });
 
       const userInfo = await getUserInfo('');
 
-      expect(userInfo).toEqual(
-        expect.objectContaining({ avatarImageSource: 'MANUAL' }),
-      );
+      expect(userInfo).toEqual(expect.objectContaining({ avatarImageSource: 'MANUAL' }));
     });
     it('should set the avatarImageSource to gravatar if it is not present in the metadata', async () => {
-      mockedAuth0Client.users.get.mockResolvedValue({
-        data: {
-          user_metadata: {},
-        },
+      mockedAuth0Client.get.mockResolvedValue({
+        user_metadata: {},
       });
 
       const userInfo = await getUserInfo('');
 
-      expect(userInfo).toEqual(
-        expect.objectContaining({ avatarImageSource: 'GRAVATAR' }),
-      );
+      expect(userInfo).toEqual(expect.objectContaining({ avatarImageSource: 'GRAVATAR' }));
     });
   });
   describe('updateUserInfo', () => {
-    let updateUserInfo: (
-      userId: string,
-      input: PatchUserInfo,
-    ) => Promise<UserInfo>;
+    let updateUserInfo: (userId: string, input: PatchUserInfo) => Promise<UserInfo>;
     beforeEach(async () => {
       updateUserInfo = (await import('./user-info-service.js')).updateUserInfo;
     });
     it('should update the given_name using the first name from the request', async () => {
       await updateUserInfo('UserID', { firstName: 'David' });
 
-      expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
-        { id: 'UserID' },
-        {
-          given_name: 'David',
-          user_metadata: {},
-        },
-      );
+      expect(mockedAuth0Client.update).toHaveBeenCalledWith('UserID', {
+        given_name: 'David',
+        user_metadata: {},
+      });
     });
     it('should update the family_name using the last name from the request', async () => {
       await updateUserInfo('UserID', { lastName: 'Johnston' });
 
-      expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
-        { id: 'UserID' },
-        {
-          family_name: 'Johnston',
-          user_metadata: {},
-        },
-      );
+      expect(mockedAuth0Client.update).toHaveBeenCalledWith('UserID', {
+        family_name: 'Johnston',
+        user_metadata: {},
+      });
     });
     it('should update the nickname using the nickname from the request', async () => {
       await updateUserInfo('UserID', { nickname: 'DJ' });
 
-      expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
-        { id: 'UserID' },
-        {
-          nickname: 'DJ',
-          user_metadata: {},
-        },
-      );
+      expect(mockedAuth0Client.update).toHaveBeenCalledWith('UserID', {
+        nickname: 'DJ',
+        user_metadata: {},
+      });
     });
     it('should update the picture using the picture from the request', async () => {
       await updateUserInfo('UserID', { picture: 'https://picture.com' });
 
-      expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
-        { id: 'UserID' },
-        {
-          picture: 'https://picture.com',
-          user_metadata: {},
-        },
-      );
+      expect(mockedAuth0Client.update).toHaveBeenCalledWith('UserID', {
+        picture: 'https://picture.com',
+        user_metadata: {},
+      });
     });
     it('should update the avatar image source in the meta_data using the source from the request', async () => {
       await updateUserInfo('UserID', {
         avatarImageSource: AvatarImageSource.MANUAL,
       });
 
-      expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
-        { id: 'UserID' },
-        {
-          user_metadata: { avatarImageSource: 'MANUAL' },
-        },
-      );
+      expect(mockedAuth0Client.update).toHaveBeenCalledWith('UserID', {
+        user_metadata: { avatarImageSource: 'MANUAL' },
+      });
     });
     it('should update the gravatar email address in the meta_data using the gravatar email address from the request', async () => {
       await updateUserInfo('UserID', {
         gravatarEmailAddress: 'david@test.com',
       });
 
-      expect(mockedAuth0Client.users.update).toHaveBeenCalledWith(
-        { id: 'UserID' },
-        {
-          user_metadata: { gravatarEmailAddress: 'david@test.com' },
-        },
-      );
+      expect(mockedAuth0Client.update).toHaveBeenCalledWith('UserID', {
+        user_metadata: { gravatarEmailAddress: 'david@test.com' },
+      });
     });
   });
 });

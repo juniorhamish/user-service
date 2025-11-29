@@ -1,8 +1,8 @@
-import { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 
 import app from '../index.js';
-import { AvatarImageSource, UserInfo } from '../types/UserInfo.js';
+import { AvatarImageSource, type UserInfo } from '../types/UserInfo.js';
 import { getUserInfo, updateUserInfo } from './user-info-service.js';
 
 const authMiddleware = vi.hoisted(() => vi.fn());
@@ -16,11 +16,9 @@ vi.mock('./user-info-service.js');
 describe('user info', () => {
   describe('unauthenticated', () => {
     beforeEach(() => {
-      authMiddleware.mockImplementation(
-        (_request: Request, _response: Response, next: NextFunction) => {
-          next();
-        },
-      );
+      authMiddleware.mockImplementation((_request: Request, _response: Response, next: NextFunction) => {
+        next();
+      });
     });
     describe('getUserInfo', () => {
       it('should throw an error if the user ID has not been set in the request', async () => {
@@ -34,9 +32,7 @@ describe('user info', () => {
     });
     describe('updateUserInfo', () => {
       it('should throw an error if the user ID has not been set in the request', async () => {
-        const response = await request(app)
-          .patch('/api/v1/user-info')
-          .send({ firstName: 'David' });
+        const response = await request(app).patch('/api/v1/user-info').send({ firstName: 'David' });
 
         expect(response.body).toEqual({
           code: 401,
@@ -47,18 +43,16 @@ describe('user info', () => {
   });
   describe('authenticated', () => {
     beforeEach(() => {
-      authMiddleware.mockImplementation(
-        (request: Request, _response: Response, next: NextFunction) => {
-          request.auth = {
-            header: {},
-            payload: {
-              sub: 'UserID',
-            },
-            token: '',
-          };
-          next();
-        },
-      );
+      authMiddleware.mockImplementation((request: Request, _response: Response, next: NextFunction) => {
+        request.auth = {
+          header: {},
+          payload: {
+            sub: 'UserID',
+          },
+          token: '',
+        };
+        next();
+      });
       vi.mocked(updateUserInfo).mockResolvedValue({} as UserInfo);
     });
     describe('getUserInfo', () => {
@@ -76,9 +70,7 @@ describe('user info', () => {
 
         await request(app).get('/api/v1/user-info').send();
 
-        expect(console.log).toHaveBeenCalledWith(
-          'Handle user info for test@foo.com',
-        );
+        expect(console.log).toHaveBeenCalledWith('Handle user info for test@foo.com');
       });
       it('should return the user info as json', async () => {
         vi.mocked(getUserInfo).mockResolvedValue({
@@ -114,14 +106,9 @@ describe('user info', () => {
         });
       });
       it('should update the user info for the user ID set in the request', async () => {
-        await request(app)
-          .patch('/api/v1/user-info')
-          .send({ firstName: 'David' });
+        await request(app).patch('/api/v1/user-info').send({ firstName: 'David' });
 
-        expect(updateUserInfo).toHaveBeenCalledWith(
-          'UserID',
-          expect.anything(),
-        );
+        expect(updateUserInfo).toHaveBeenCalledWith('UserID', expect.anything());
       });
       it('should log the users email address', async () => {
         vi.spyOn(console, 'log');
@@ -129,13 +116,9 @@ describe('user info', () => {
           email: 'test@foo.com',
         } as UserInfo);
 
-        await request(app)
-          .patch('/api/v1/user-info')
-          .send({ lastName: 'Johnston' });
+        await request(app).patch('/api/v1/user-info').send({ lastName: 'Johnston' });
 
-        expect(console.log).toHaveBeenCalledWith(
-          'Handle user info for test@foo.com',
-        );
+        expect(console.log).toHaveBeenCalledWith('Handle user info for test@foo.com');
       });
       it('should return the updated user info as json', async () => {
         vi.mocked(updateUserInfo).mockResolvedValue({
@@ -148,9 +131,7 @@ describe('user info', () => {
           picture: 'G',
         });
 
-        const response = await request(app)
-          .patch('/api/v1/user-info')
-          .send({ firstName: 'David' });
+        const response = await request(app).patch('/api/v1/user-info').send({ firstName: 'David' });
 
         expect(response.body).toEqual({
           avatarImageSource: 'GRAVATAR',

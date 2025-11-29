@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { HttpError } from 'http-errors';
+import type { Request, Response } from 'express';
+import type { HttpError } from 'http-errors';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
 
