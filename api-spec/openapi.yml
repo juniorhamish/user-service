@@ -59,6 +59,80 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - auth0_auth: []
+  /households:
+    get:
+      tags:
+        - households
+      summary: Get households this user belongs to.
+      description: Get households this user belongs to.
+      operationId: getUserHouseholds
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Household'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - auth0_auth: []
+    post:
+      tags:
+        - households
+      summary: Create a new household
+      description: Create a new household
+      operationId: createUserHousehold
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Household'
+      responses:
+        201:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - auth0_auth: []
+  /households/{id}:
+    delete:
+      tags:
+        - households
+      summary: delete a household by id
+      description: delete a household by id
+      operationId: deleteUserHousehold
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        204:
+          description: success
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - auth0_auth: []
 components:
   schemas:
     BaseUser:
@@ -105,6 +179,53 @@ components:
       enum:
         - GRAVATAR
         - MANUAL
+    HouseholdMember:
+      type: object
+      required:
+        - id
+        - user_id
+        - role
+        - joined_at
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: string
+        role:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+    Household:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - created_by
+        - updated_at
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        created_by:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        members:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/HouseholdMember'
     Error:
       type: object
       properties:

@@ -16,5 +16,9 @@ export default defineConfig({
     },
     environment: 'node',
     globals: true,
+    projects: [
+      { extends: true, test: { name: 'unit', include: ['**/*.test.ts'], exclude: ['**/*.db.test.ts'] } },
+      { extends: true, test: { name: 'db', include: ['**/*.db.test.ts'], setupFiles: ['dotenv/config'] } },
+    ],
   },
 });
