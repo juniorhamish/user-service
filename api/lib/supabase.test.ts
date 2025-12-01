@@ -11,6 +11,7 @@ describe('database connection', () => {
   it('should throw an error if the anon key is not set', () => {
     vi.stubEnv('SUPABASE_URL', 'Something');
     vi.stubEnv('SUPABASE_JWT_SIGNING_KEY', 'Something');
+    vi.stubEnv('SUPABASE_ANON_KEY', undefined);
 
     expect(() => getSupabaseClient('')).toThrowError(
       'Missing Supabase configuration. Please set SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_JWT_SIGNING_KEY environment variables.',
@@ -19,6 +20,7 @@ describe('database connection', () => {
   it('should throw an error if the url is not set', () => {
     vi.stubEnv('SUPABASE_JWT_SIGNING_KEY', 'Something');
     vi.stubEnv('SUPABASE_ANON_KEY', 'Something');
+    vi.stubEnv('SUPABASE_URL', undefined);
 
     expect(() => getSupabaseClient('')).toThrowError(
       'Missing Supabase configuration. Please set SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_JWT_SIGNING_KEY environment variables.',
@@ -27,6 +29,7 @@ describe('database connection', () => {
   it('should throw an error if the signing key is not set', () => {
     vi.stubEnv('SUPABASE_URL', 'Something');
     vi.stubEnv('SUPABASE_ANON_KEY', 'Something');
+    vi.stubEnv('SUPABASE_JWT_SIGNING_KEY', undefined);
 
     expect(() => getSupabaseClient('')).toThrowError(
       'Missing Supabase configuration. Please set SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_JWT_SIGNING_KEY environment variables.',

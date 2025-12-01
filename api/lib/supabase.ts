@@ -21,7 +21,6 @@ export function getSupabaseClient(user: string): SupabaseClient<Database> {
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
   const supabaseSigningKey = process.env.SUPABASE_JWT_SIGNING_KEY;
 
-  console.log(supabaseUrl);
   if (!supabaseUrl || !supabaseKey || !supabaseSigningKey) {
     throw new Error(
       'Missing Supabase configuration. Please set SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_JWT_SIGNING_KEY environment variables.',
