@@ -5,13 +5,17 @@
   "type": "module",
   "scripts": {
     "type-check": "tsc --noEmit",
-    "start": "tsx api/index.ts",
-    "dev": "tsx --watch api/index.ts",
+    "start": "tsx apis/index.ts",
+    "dev": "tsx --watch apis/index.ts",
     "test": "vitest run --coverage",
+    "test:unit": "vitest run --project unit",
+    "test:db": "vitest run --project db",
     "check": "biome check",
-    "format": "biome check --write --unsafe"
+    "format": "biome check --write --unsafe",
+    "gen-types": "supabase gen types typescript --project-id=eiwvpymripdqmwqynriq > apis/types/database.types.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.86.0",
     "auth0": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -19,6 +23,7 @@
     "express-oauth2-jwt-bearer": "^1.7.1",
     "express-openapi-validator": "^5.6.0",
     "helmet": "^8.1.0",
+    "jose": "^6.1.2",
     "morgan": "^1.10.1"
   },
   "devDependencies": {
@@ -31,8 +36,9 @@
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.14",
     "globals": "^16.5.0",
+    "supabase": "^2.63.2",
     "supertest": "^7.1.4",
-    "tsx": "^4.20.6",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.14"
   }

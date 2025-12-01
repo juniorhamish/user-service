@@ -21,6 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run tests
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_JWT_SIGNING_KEY: ${{ secrets.SUPABASE_JWT_SIGNING_KEY }}
         run: npm run test
       - name: Publish code coverage
         if: always()

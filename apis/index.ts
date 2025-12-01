@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import logger from 'morgan';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
+import householdsRouter from './routes/user-households.js';
 import userInfoRouter from './routes/user-info.js';
 
 const jwtCheck = auth({
@@ -45,6 +46,7 @@ app.use(
 
 // Routes
 app.use('/api/v1/user-info', userInfoRouter);
+app.use('/api/v1/households', householdsRouter);
 // Error handlers
 app.use(generalErrorHandler, notFoundHandler);
 
