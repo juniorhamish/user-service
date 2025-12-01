@@ -4,7 +4,6 @@ import cors from 'cors';
 import express from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 import OpenApiValidator from 'express-openapi-validator';
-import helmet from 'helmet';
 import logger from 'morgan';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
@@ -20,7 +19,6 @@ const jwtCheck = auth({
 const app = express();
 
 app.use(logger('combined'));
-app.use(helmet());
 app.use(
   cors({
     origin: [
