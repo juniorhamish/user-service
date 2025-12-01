@@ -12,7 +12,7 @@ async function signJwt(user: string, signingKey: string) {
     role: 'authenticated',
   })
     .setProtectedHeader({ alg: privateSigningKeyJWK.alg, typ: 'JWT', kid: privateSigningKeyJWK.kid })
-    .setExpirationTime('1h')
+    .setExpirationTime('2h')
     .sign(privateKey);
 }
 
