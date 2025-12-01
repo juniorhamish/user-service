@@ -12,8 +12,7 @@
     "test:db": "vitest run --project db",
     "check": "biome check",
     "format": "biome check --write --unsafe",
-    "gen-types": "supabase gen types typescript --project-id=eiwvpymripdqmwqynriq > src/types/database.types.ts",
-    "postinstall": "npm ls helmet"
+    "gen-types": "supabase gen types typescript --project-id=eiwvpymripdqmwqynriq > src/types/database.types.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.86.0",
