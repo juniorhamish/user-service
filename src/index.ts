@@ -7,8 +7,8 @@ import OpenApiValidator from 'express-openapi-validator';
 import logger from 'morgan';
 
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
-import householdsRouter from './routes/user-households.js';
-import userInfoRouter from './routes/user-info.js';
+import householdsRouter from './routes/user-households-router.js';
+import userInfoRouter from './routes/user-info-router.js';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',

@@ -29,8 +29,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - auth0_auth: []
     patch:
       tags:
         - user-info
@@ -57,8 +55,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - auth0_auth: []
   /households:
     get:
       tags:
@@ -81,8 +77,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - auth0_auth: []
     post:
       tags:
         - households
@@ -107,8 +101,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - auth0_auth: []
   /households/{id}:
     delete:
       tags:
@@ -131,8 +123,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - auth0_auth: []
 components:
   schemas:
     BaseUser:
@@ -229,13 +219,10 @@ components:
     Error:
       type: object
       properties:
-        code:
+        status:
           type: number
         message:
           type: string
-      required:
-        - code
-        - message
   securitySchemes:
     auth0_auth:
       type: oauth2
@@ -246,3 +233,5 @@ components:
             'openid': openid
             'profile': profile
             'offline_access': offline access
+security:
+  - auth0_auth: []

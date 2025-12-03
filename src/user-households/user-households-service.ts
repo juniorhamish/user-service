@@ -1,3 +1,4 @@
+import { DATABASE_ERROR_CODES, DuplicateEntityError } from '../db-error-handling/supabase-errors.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 
 export class UserHouseholdsService {
@@ -9,7 +10,12 @@ export class UserHouseholdsService {
 
   async createHousehold(household: { name: string }) {
     const { data, error } = await this.supabase.from('households').insert(household).select();
-    if (error) throw error;
+    if (error) {
+      if (error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
+        throw new DuplicateEntityError(`Household with name ${household.name} already exists`);
+      }
+      throw error;
+    }
     return data[0];
   }
 

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
+import { DuplicateEntityError } from '../db-error-handling/supabase-errors.js';
 import app from '../index.js';
 import { UserHouseholdsService } from './user-households-service.js';
 
@@ -34,7 +35,7 @@ describe('user households routes', () => {
         const response = await request(app).get('/api/v1/households').send();
 
         expect(response.body).toEqual({
-          code: 401,
+          status: 401,
           message: 'Invalid credentials',
         });
       });
@@ -47,7 +48,7 @@ describe('user households routes', () => {
           .set('Content-Type', 'application/json');
 
         expect(response.body).toEqual({
-          code: 401,
+          status: 401,
           message: 'Invalid credentials',
         });
       });
@@ -57,7 +58,7 @@ describe('user households routes', () => {
         const response = await request(app).delete('/api/v1/households/1').send();
 
         expect(response.body).toEqual({
-          code: 401,
+          status: 401,
           message: 'Invalid credentials',
         });
       });
@@ -123,6 +124,24 @@ describe('user households routes', () => {
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
         });
+      });
+      it('should return a 409 status code when the household already exists', async () => {
+        createUserHouseholdMock.mockRejectedValue(new DuplicateEntityError());
+        const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
+        expect(response.status).toEqual(409);
+        expect(response.body).toEqual({ status: 409, message: 'Duplicate entity' });
+      });
+      it('should return a 500 status code when an error occurs', async () => {
+        createUserHouseholdMock.mockRejectedValue(new Error('Message'));
+        const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({ status: 500, message: 'Message' });
+      });
+      it('should return a 500 status code when an unknown error occurs', async () => {
+        createUserHouseholdMock.mockRejectedValue({});
+        const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({ status: 500, message: 'An unknown error occurred.' });
       });
     });
     describe('deleteHousehold', () => {
