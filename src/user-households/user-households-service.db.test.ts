@@ -64,4 +64,26 @@ describe('user households service', () => {
     await serviceA.deleteHousehold(id);
     expect(await serviceA.getUserHouseholds()).toEqual([]);
   });
+  it('should be possible to update an existing household created by the user making the request', async () => {
+    const household = await serviceA.createHousehold({ name: 'A' });
+    const updatedHousehold = await serviceA.updateHousehold(household.id, { name: 'B' });
+    expect(updatedHousehold).toEqual({ ...household, name: 'B' });
+    expect(await serviceA.getUserHouseholds()).toEqual([expect.objectContaining({ name: 'B' })]);
+  });
+  it('should not be possible to update a household created by another user', async () => {
+    const household = await serviceA.createHousehold({ name: 'A' });
+    await serviceB.updateHousehold(household.id, { name: 'B' });
+    expect(await serviceA.getUserHouseholds()).toEqual([expect.objectContaining({ name: 'A' })]);
+  });
+  it('should not be possible to update a household to have the same name as an existing household', async () => {
+    await serviceA.createHousehold({ name: 'A' });
+    const household = await serviceA.createHousehold({ name: 'B' });
+    await expect((async () => await serviceA.updateHousehold(household.id, { name: 'A' }))()).rejects.toThrowError(
+      'Household with name A already exists',
+    );
+    expect(await serviceA.getUserHouseholds()).toEqual([
+      expect.objectContaining({ name: 'B' }),
+      expect.objectContaining({ name: 'A' }),
+    ]);
+  });
 });

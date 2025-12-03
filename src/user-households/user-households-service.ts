@@ -1,5 +1,10 @@
+import type { PostgrestError } from '@supabase/supabase-js';
 import { DATABASE_ERROR_CODES, DuplicateEntityError } from '../db-error-handling/supabase-errors.js';
 import { getSupabaseClient } from '../lib/supabase.js';
+
+export type Household = {
+  name: string;
+};
 
 export class UserHouseholdsService {
   private readonly supabase;
@@ -8,19 +13,31 @@ export class UserHouseholdsService {
     this.supabase = getSupabaseClient(user);
   }
 
-  async createHousehold(household: { name: string }) {
+  async createHousehold(household: Household) {
     const { data, error } = await this.supabase.from('households').insert(household).select();
     if (error) {
-      if (error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
-        throw new DuplicateEntityError(`Household with name ${household.name} already exists`);
-      }
-      throw error;
+      throw this.handleSupabaseError(error, household);
     }
     return data[0];
   }
 
   async deleteHousehold(id: number) {
     await this.supabase.from('households').delete().eq('id', id);
+  }
+
+  async updateHousehold(id: number, household: Household) {
+    const { data, error } = await this.supabase.from('households').update(household).eq('id', id).select();
+    if (error) {
+      throw this.handleSupabaseError(error, household);
+    }
+    return data[0];
+  }
+
+  handleSupabaseError(error: PostgrestError, household: Household) {
+    if (error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
+      return new DuplicateEntityError(`Household with name ${household.name} already exists`);
+    }
+    return error;
   }
 
   async getUserHouseholds() {
