@@ -25,7 +25,7 @@ describe('user info', () => {
         const response = await request(app).get('/api/v1/user-info').send();
 
         expect(response.body).toEqual({
-          code: 401,
+          status: 401,
           message: 'Invalid credentials',
         });
       });
@@ -35,7 +35,7 @@ describe('user info', () => {
         const response = await request(app).patch('/api/v1/user-info').send({ firstName: 'David' });
 
         expect(response.body).toEqual({
-          code: 401,
+          status: 401,
           message: 'Invalid credentials',
         });
       });
@@ -101,8 +101,17 @@ describe('user info', () => {
         const response = await request(app).patch('/api/v1/user-info').send({});
 
         expect(response.body).toEqual({
-          code: 400,
+          errors: [
+            {
+              errorCode: 'minProperties.openapi.validation',
+              message: 'must NOT have fewer than 1 properties',
+              path: '/body',
+            },
+          ],
+          status: 400,
           message: 'request/body must NOT have fewer than 1 properties',
+          name: 'Bad Request',
+          path: '/api/v1/user-info',
         });
       });
       it('should update the user info for the user ID set in the request', async () => {

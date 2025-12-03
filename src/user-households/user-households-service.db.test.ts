@@ -38,7 +38,15 @@ describe('user households service', () => {
   });
   it('should throw an error when creating a household with an existing name', async () => {
     await serviceA.createHousehold({ name: 'A' });
-    await expect((async () => await serviceA.createHousehold({ name: 'A' }))()).rejects.toThrowError();
+    await expect((async () => await serviceA.createHousehold({ name: 'A' }))()).rejects.toThrowError(
+      'Household with name A already exists',
+    );
+  });
+  it('should throw an error when creating a household with invalid data', async () => {
+    // @ts-expect-error
+    await expect((async () => await serviceA.createHousehold({ foo: 'A' }))()).rejects.toThrowError(
+      "Could not find the 'foo' column of 'households' in the schema cache",
+    );
   });
   it('should be possible to create a household with the same name as another user', async () => {
     await serviceA.createHousehold({ name: 'A' });

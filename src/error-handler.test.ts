@@ -28,7 +28,7 @@ describe('error handling', () => {
       generalErrorHandler(error, {} as Request, response as Response, vi.fn());
 
       expect(response.json).toHaveBeenCalledWith({
-        code: 400,
+        status: 400,
         message: 'This is the error message.',
       });
     });
@@ -40,7 +40,9 @@ describe('error handling', () => {
 
       generalErrorHandler(error, {} as Request, response as Response, vi.fn());
 
-      expect(console.log).toHaveBeenCalledWith('This is the error message.');
+      expect(console.log).toHaveBeenCalledWith(
+        'Caught HttpError with status undefined and message This is the error message.',
+      );
     });
   });
   describe('not found error', () => {
@@ -53,7 +55,7 @@ describe('error handling', () => {
       notFoundHandler({ path: '/not-found' } as Request, response as Response);
 
       expect(response.json).toHaveBeenCalledWith({
-        code: 404,
+        status: 404,
         message: '/not-found Not Found',
       });
     });

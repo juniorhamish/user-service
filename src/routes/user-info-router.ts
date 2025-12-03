@@ -1,6 +1,5 @@
 import { type NextFunction, type Request, type RequestHandler, type Response, Router } from 'express';
-import { UnauthorizedError } from 'express-oauth2-jwt-bearer';
-
+import createError from 'http-errors';
 import type { PatchUserInfo, UserInfo } from '../types/UserInfo.js';
 import { getUserInfo, updateUserInfo } from '../user-info/user-info-service.js';
 
@@ -17,7 +16,7 @@ const handleRequest = async (
     console.log(`Handle user info for ${userInfo.email}`);
     response.json(userInfo);
   } else {
-    next(new UnauthorizedError('Invalid credentials'));
+    next(createError(401, 'Invalid credentials'));
   }
 };
 
