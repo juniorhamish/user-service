@@ -123,6 +123,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - households
+      summary: update a household by id
+      description: update a household by id
+      operationId: updateUserHousehold
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchableHousehold'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Household'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     BaseUser:
@@ -186,11 +216,11 @@ components:
         joined_at:
           type: string
           format: date-time
-    Household:
+    BaseHousehold:
       type: object
+      additionalProperties: false
       required:
         - id
-        - name
         - created_at
         - created_by
         - updated_at
@@ -216,6 +246,17 @@ components:
           readOnly: true
           items:
             $ref: '#/components/schemas/HouseholdMember'
+    Household:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseHousehold'
+      required:
+        - name
+    PatchableHousehold:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseHousehold'
+      minProperties: 1
     Error:
       type: object
       properties:

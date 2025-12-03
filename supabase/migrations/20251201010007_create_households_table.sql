@@ -32,3 +32,10 @@ CREATE POLICY "Users can delete own households" ON "user-service".households
     USING (
     (SELECT auth.jwt() ->> 'sub') = created_by
     );
+
+DROP POLICY IF EXISTS "Users can update own households" ON "user-service".households;
+CREATE POLICY "Users can update own households" ON "user-service".households
+    FOR UPDATE TO public
+    USING (
+    (SELECT auth.jwt() ->> 'sub') = created_by
+    );

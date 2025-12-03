@@ -45,5 +45,25 @@ router.delete('/:id', async (request, response, next) => {
     next(createError(401, 'Invalid credentials'));
   }
 });
+router.patch('/:id', async (request, response, next) => {
+  const userId = request.auth?.payload.sub;
+  if (userId) {
+    const householdService = new UserHouseholdsService(userId);
+    try {
+      const updatedHousehold = await householdService.updateHousehold(Number(request.params.id), request.body);
+      response.status(200).json(updatedHousehold);
+    } catch (error) {
+      if (error instanceof DuplicateEntityError) {
+        next(createError(409, error.message));
+      } else if (error instanceof Error) {
+        next(createError(500, error.message));
+      } else {
+        next(createError(500, 'An unknown error occurred.'));
+      }
+    }
+  } else {
+    next(createError(401, 'Invalid credentials'));
+  }
+});
 
 export default router;
