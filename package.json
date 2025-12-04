@@ -12,7 +12,8 @@
     "test:db": "vitest run --project db",
     "check": "biome check",
     "format": "biome check --write --unsafe",
-    "gen-types": "supabase gen types typescript --project-id=xlzyfsfxuvxlbdrstnec --schema=user-service > src/types/database.types.ts"
+    "types": "supabase gen types typescript --project-id=xlzyfsfxuvxlbdrstnec --schema=user_service > src/types/database.types.ts",
+    "posttypes": "npm run format"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.86.0",

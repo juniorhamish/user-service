@@ -72,7 +72,9 @@ describe('user households service', () => {
   });
   it('should not be possible to update a household created by another user', async () => {
     const household = await serviceA.createHousehold({ name: 'A' });
-    await serviceB.updateHousehold(household.id, { name: 'B' });
+    await expect((async () => await serviceB.updateHousehold(household.id, { name: 'B' }))()).rejects.toThrowError(
+      `Household with id ${household.id} not found`,
+    );
     expect(await serviceA.getUserHouseholds()).toEqual([expect.objectContaining({ name: 'A' })]);
   });
   it('should not be possible to update a household to have the same name as an existing household', async () => {
@@ -85,5 +87,35 @@ describe('user households service', () => {
       expect.objectContaining({ name: 'B' }),
       expect.objectContaining({ name: 'A' }),
     ]);
+  });
+  it('should throw a not found error if the requested household does not exist', async () => {
+    await expect((async () => await serviceA.updateHousehold(1234, { name: 'A' }))()).rejects.toThrowError(
+      'Household with id 1234 not found',
+    );
+  });
+  it('should return an invitation for each invited user', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    const result = await serviceA.inviteUsers(id, ['test@foo.com', 'test@bar.com']);
+    expect(result).toEqual([
+      expect.objectContaining({ invited_user: 'test@foo.com', household_id: id, invited_by_user_id: 'A' }),
+      expect.objectContaining({ invited_user: 'test@bar.com', household_id: id, invited_by_user_id: 'A' }),
+    ]);
+  });
+  it('should not be possible to invite a user to a household you are not the owner of', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    await expect((async () => await serviceB.inviteUsers(id, ['test@foo.com']))()).rejects.toThrowError(
+      `Household with id ${id} not found`,
+    );
+  });
+  it('should throw an error if the household ID does not exist', async () => {
+    await expect((async () => await serviceB.inviteUsers(1, ['test@foo.com']))()).rejects.toThrowError(
+      'Household with id 1 not found',
+    );
+  });
+  it('should throw an error if an invitee is already the owner of the household', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    await expect((async () => await serviceA.inviteUsers(id, ['A']))()).rejects.toThrowError(
+      'The invited user is already the owner of the household',
+    );
   });
 });

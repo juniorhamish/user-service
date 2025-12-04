@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { DuplicateEntityError } from '../db-error-handling/supabase-errors.js';
+import { DuplicateEntityError, InvitedUserIsOwnerError, NotFoundError } from '../db-error-handling/supabase-errors.js';
 import app from '../index.js';
 import { UserHouseholdsService } from './user-households-service.js';
 
@@ -13,6 +13,7 @@ const getUserHouseholdsMock = vi.hoisted(() => vi.fn());
 const createUserHouseholdMock = vi.hoisted(() => vi.fn());
 const deleteUserHouseholdMock = vi.hoisted(() => vi.fn());
 const updateUserHouseholdMock = vi.hoisted(() => vi.fn());
+const inviteUserToHouseholdMock = vi.hoisted(() => vi.fn());
 vi.mock('./user-households-service.js', () => {
   const UserHouseholdsService = vi.fn(
     class {
@@ -20,6 +21,7 @@ vi.mock('./user-households-service.js', () => {
       createHousehold = createUserHouseholdMock;
       deleteHousehold = deleteUserHouseholdMock;
       updateHousehold = updateUserHouseholdMock;
+      inviteUsers = inviteUserToHouseholdMock;
     },
   );
   return { UserHouseholdsService };
@@ -75,6 +77,18 @@ describe('user households routes', () => {
         });
       });
     });
+    describe('invite user to household', () => {
+      it('should throw an error if the user ID has not been set in the request', async () => {
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'dave@foo.com' }]);
+
+        expect(response.body).toEqual({
+          status: 401,
+          message: 'Invalid credentials',
+        });
+      });
+    });
   });
   describe('authenticated', () => {
     beforeEach(() => {
@@ -82,7 +96,7 @@ describe('user households routes', () => {
         request.auth = {
           header: {},
           payload: {
-            sub: 'UserID',
+            email: 'UserID',
           },
           token: '',
         };
@@ -278,6 +292,141 @@ describe('user households routes', () => {
           name: 'Bad Request',
           path: '/api/v1/households/1',
           status: 400,
+        });
+      });
+      it('should return a 404 status code when the household does not exist', async () => {
+        updateUserHouseholdMock.mockRejectedValue(new NotFoundError());
+        const response = await request(app).patch('/api/v1/households/1').send({ name: 'Dave' });
+        expect(response.status).toEqual(404);
+        expect(response.body).toEqual({
+          message: 'The requested entity was not found',
+          status: 404,
+        });
+      });
+    });
+    describe('invite users to household', () => {
+      it('should reject requests where the invited_user is not a valid email address', async () => {
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'Dave' }]);
+
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          errors: [
+            {
+              errorCode: 'format.openapi.validation',
+              message: 'must match format "email"',
+              path: '/body/0/invited_user',
+            },
+          ],
+          message: 'request/body/0/invited_user must match format "email"',
+          name: 'Bad Request',
+          path: '/api/v1/households/1/invitations',
+          status: 400,
+        });
+      });
+      it('should reject requests where the body contains an id', async () => {
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com', id: 123 }]);
+
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          errors: [
+            {
+              errorCode: 'readOnly.openapi.validation',
+              message: 'is read-only',
+              path: '/body/0/id',
+            },
+          ],
+          message: 'request/body/0/id is read-only',
+          name: 'Bad Request',
+          path: '/api/v1/households/1/invitations',
+          status: 400,
+        });
+      });
+      it('should reject requests where the body contains multiple invites for the same user', async () => {
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com' }, { invited_user: 'david@foo.com' }]);
+
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          message: 'Request body includes the same email address multiple times',
+          status: 400,
+        });
+      });
+      it('should return an invitation object for each invited_user', async () => {
+        inviteUserToHouseholdMock.mockResolvedValue([
+          {
+            id: 1,
+            household_id: 1,
+            invited_by_user_id: 'UserId',
+            invited_user: 'david@foo.com',
+            invited_at: '2025-01-01T00:00:00Z',
+          },
+          {
+            id: 2,
+            household_id: 1,
+            invited_by_user_id: 'UserId',
+            invited_user: 'david@bar.com',
+            invited_at: '2025-01-01T00:00:00Z',
+          },
+        ]);
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com' }, { invited_user: 'david@bar.com' }]);
+        expect(inviteUserToHouseholdMock).toHaveBeenCalledWith(1, ['david@foo.com', 'david@bar.com']);
+        expect(response.status).toEqual(201);
+        expect(response.body).toEqual([
+          {
+            id: 1,
+            household_id: 1,
+            invited_by_user_id: 'UserId',
+            invited_user: 'david@foo.com',
+            invited_at: '2025-01-01T00:00:00Z',
+          },
+          {
+            id: 2,
+            household_id: 1,
+            invited_by_user_id: 'UserId',
+            invited_user: 'david@bar.com',
+            invited_at: '2025-01-01T00:00:00Z',
+          },
+        ]);
+      });
+      it('should respond with a 400 if the invited user is the owner', async () => {
+        inviteUserToHouseholdMock.mockRejectedValue(new InvitedUserIsOwnerError());
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com' }]);
+        expect(inviteUserToHouseholdMock).toHaveBeenCalledWith(1, ['david@foo.com']);
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          message: 'The invited user is already the owner of the household',
+          status: 400,
+        });
+      });
+      it('should respond with a 500 if there is an unknown error', async () => {
+        inviteUserToHouseholdMock.mockRejectedValue(new Error('Unknown error'));
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com' }]);
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'Unknown error',
+          status: 500,
+        });
+      });
+      it('should respond with a 500 if there is an error', async () => {
+        inviteUserToHouseholdMock.mockRejectedValue({});
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com' }]);
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'An unknown error occurred.',
+          status: 500,
         });
       });
     });

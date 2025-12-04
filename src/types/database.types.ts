@@ -6,8 +6,40 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: '13.0.5';
   };
-  'user-service': {
+  user_service: {
     Tables: {
+      household_invitations: {
+        Row: {
+          household_id: number;
+          id: number;
+          invited_at: string | null;
+          invited_by_user_id: string;
+          invited_user: string;
+        };
+        Insert: {
+          household_id: number;
+          id?: number;
+          invited_at?: string | null;
+          invited_by_user_id?: string;
+          invited_user: string;
+        };
+        Update: {
+          household_id?: number;
+          id?: number;
+          invited_at?: string | null;
+          invited_by_user_id?: string;
+          invited_user?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'household_invitations_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       households: {
         Row: {
           created_at: string | null;
@@ -158,7 +190,7 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  'user-service': {
+  user_service: {
     Enums: {},
   },
 } as const;

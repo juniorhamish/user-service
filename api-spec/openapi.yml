@@ -153,6 +153,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /households/{id}/invitations:
+    post:
+      tags:
+        - households
+      summary: invite a user to join a household
+      description: invite a user to join a household
+      operationId: inviteUserToHousehold
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/HouseholdInvitation'
+      responses:
+        201:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HouseholdInvitation'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     BaseUser:
@@ -257,6 +292,31 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseHousehold'
       minProperties: 1
+    HouseholdInvitation:
+      type: object
+      required:
+        - id
+        - household_id
+        - invited_by_user_id
+        - invited_user
+        - invited_at
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        household_id:
+          type: integer
+          readOnly: true
+        invited_by_user_id:
+          type: string
+          readOnly: true
+        invited_user:
+          type: string
+          format: email
+        invited_at:
+          type: string
+          format: date-time
+          readOnly: true
     Error:
       type: object
       properties:
