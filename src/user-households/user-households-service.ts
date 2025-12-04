@@ -1,9 +1,17 @@
 import type { PostgrestError } from '@supabase/supabase-js';
-import { DATABASE_ERROR_CODES, DuplicateEntityError } from '../db-error-handling/supabase-errors.js';
+import {
+  DATABASE_ERROR_CODES,
+  DuplicateEntityError,
+  InvitedUserIsOwnerError,
+  NotFoundError,
+} from '../db-error-handling/supabase-errors.js';
 import { getSupabaseClient } from '../lib/supabase.js';
 
 export type Household = {
   name: string;
+};
+export type HouseholdInvitation = {
+  invited_user: string;
 };
 
 export class UserHouseholdsService {
@@ -25,7 +33,14 @@ export class UserHouseholdsService {
     await this.supabase.from('households').delete().eq('id', id);
   }
 
+  async getHousehold(id: number) {
+    const { data } = await this.supabase.from('households').select().eq('id', id);
+    if (!data || data.length === 0) throw new NotFoundError(`Household with id ${id} not found`);
+    return data[0];
+  }
+
   async updateHousehold(id: number, household: Household) {
+    await this.getHousehold(id);
     const { data, error } = await this.supabase.from('households').update(household).eq('id', id).select();
     if (error) {
       throw this.handleSupabaseError(error, household);
@@ -68,5 +83,15 @@ export class UserHouseholdsService {
     //     };
     //   }),
     // );
+  }
+
+  async inviteUsers(householdId: number, emails: string[]) {
+    const household = await this.getHousehold(householdId);
+    if (emails.includes(household.created_by)) throw new InvitedUserIsOwnerError();
+    const { data } = await this.supabase
+      .from('household_invitations')
+      .insert(emails.map((email) => ({ invited_user: email, household_id: householdId })))
+      .select();
+    return data;
   }
 }

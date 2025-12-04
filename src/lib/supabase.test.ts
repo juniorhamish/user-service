@@ -47,7 +47,7 @@ describe('database connection', () => {
     expect(createClient).toHaveBeenCalledWith(
       'SUPABASE_URL',
       'SUPABASE_ANON_KEY',
-      expect.objectContaining({ db: { schema: 'user-service' } }),
+      expect.objectContaining({ db: { schema: 'user_service' } }),
     );
   });
 });

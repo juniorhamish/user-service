@@ -7,3 +7,15 @@ export class DuplicateEntityError extends Error {
     super(message);
   }
 }
+
+export class InvitedUserIsOwnerError extends Error {
+  constructor(message = 'The invited user is already the owner of the household') {
+    super(message);
+  }
+}
+
+export class NotFoundError extends Error {
+  constructor(message = 'The requested entity was not found') {
+    super(message);
+  }
+}

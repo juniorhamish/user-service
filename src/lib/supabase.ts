@@ -28,7 +28,7 @@ export function getSupabaseClient(user: string): SupabaseClient<Database> {
   }
   supabaseClient = createClient<Database>(supabaseUrl, supabaseKey, {
     accessToken: () => signJwt(user, supabaseSigningKey),
-    db: { schema: 'user-service' },
+    db: { schema: 'user_service' },
   });
 
   return supabaseClient;
