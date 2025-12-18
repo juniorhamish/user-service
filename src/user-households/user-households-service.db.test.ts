@@ -67,7 +67,7 @@ describe('user households service', () => {
   it('should be possible to update an existing household created by the user making the request', async () => {
     const household = await serviceA.createHousehold({ name: 'A' });
     const updatedHousehold = await serviceA.updateHousehold(household.id, { name: 'B' });
-    expect(updatedHousehold).toEqual({ ...household, name: 'B' });
+    expect(updatedHousehold).toEqual({ ...household, updated_at: updatedHousehold.updated_at, name: 'B' });
     expect(await serviceA.getUserHouseholds()).toEqual([expect.objectContaining({ name: 'B' })]);
   });
   it('should not be possible to update a household created by another user', async () => {
@@ -144,5 +144,10 @@ describe('user households service', () => {
         pending_invites: [expect.objectContaining({ invited_user: 'B', household_id: id, invited_by_user_id: 'A' })],
       }),
     );
+  });
+  it('should update the updated_at time on patch', async () => {
+    const { id, updated_at } = await serviceA.createHousehold({ name: 'A' });
+    const { updated_at: new_updated_at } = await serviceA.updateHousehold(id, { name: 'C' });
+    expect(updated_at).not.toEqual(new_updated_at);
   });
 });
