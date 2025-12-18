@@ -112,6 +112,7 @@ describe('user households routes', () => {
             created_by: '',
             created_at: '2025-01-01T00:00:00Z',
             updated_at: '2025-01-01T00:00:00Z',
+            pending_invites: [],
           },
         ]);
         const response = await request(app).get('/api/v1/households').send();
@@ -125,6 +126,7 @@ describe('user households routes', () => {
             created_by: '',
             created_at: '2025-01-01T00:00:00Z',
             updated_at: '2025-01-01T00:00:00Z',
+            pending_invites: [],
           },
         ]);
       });
@@ -137,6 +139,7 @@ describe('user households routes', () => {
           created_by: '',
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
+          pending_invites: [],
         });
         const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
 
@@ -149,6 +152,7 @@ describe('user households routes', () => {
           created_by: '',
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
+          pending_invites: [],
         });
       });
       it('should return a 409 status code when the household already exists', async () => {
@@ -188,6 +192,7 @@ describe('user households routes', () => {
           created_by: '',
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
+          pending_invites: [],
         });
         const response = await request(app).patch('/api/v1/households/1').send({ name: 'Dave' });
 
@@ -200,6 +205,7 @@ describe('user households routes', () => {
           created_by: '',
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
+          pending_invites: [],
         });
       });
       it('should return a 409 status code when updating name to match an existing household', async () => {
@@ -427,6 +433,17 @@ describe('user households routes', () => {
         expect(response.body).toEqual({
           message: 'An unknown error occurred.',
           status: 500,
+        });
+      });
+      it('should respond with a 409 if the invited user is already invited', async () => {
+        inviteUserToHouseholdMock.mockRejectedValue(new DuplicateEntityError('User already invited'));
+        const response = await request(app)
+          .post('/api/v1/households/1/invitations')
+          .send([{ invited_user: 'david@foo.com' }]);
+        expect(response.status).toEqual(409);
+        expect(response.body).toEqual({
+          message: 'User already invited',
+          status: 409,
         });
       });
     });

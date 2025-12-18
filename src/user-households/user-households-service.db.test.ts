@@ -16,13 +16,13 @@ describe('user households service', () => {
   afterEach(async () => {
     await cleanDB();
   });
-  it('should return an empty list if the user has not created any ', async () => {
+  it('should return an empty list if the user has not created any households', async () => {
     const result = await serviceA.getUserHouseholds();
     expect(result).toEqual([]);
   });
   it('should return the created household', async () => {
     const result = await serviceA.createHousehold({ name: 'Test Household' });
-    expect(result).toEqual(expect.objectContaining({ name: 'Test Household' }));
+    expect(result).toEqual(expect.objectContaining({ name: 'Test Household', pending_invites: [] }));
   });
   it('should return only the households created by themself', async () => {
     await serviceA.createHousehold({ name: 'A' });
@@ -116,6 +116,33 @@ describe('user households service', () => {
     const { id } = await serviceA.createHousehold({ name: 'A' });
     await expect((async () => await serviceA.inviteUsers(id, ['A']))()).rejects.toThrowError(
       'The invited user is already the owner of the household',
+    );
+  });
+  it('should throw an error if an invitee is already invited to the household', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    await serviceA.inviteUsers(id, ['B']);
+    await expect((async () => await serviceA.inviteUsers(id, ['B']))()).rejects.toThrowError('User already invited');
+  });
+  it('should include pending invites in the list of households response', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    await serviceA.inviteUsers(id, ['B']);
+    const households = await serviceA.getUserHouseholds();
+    expect(households).toEqual([
+      expect.objectContaining({
+        name: 'A',
+        pending_invites: [expect.objectContaining({ invited_user: 'B', household_id: id, invited_by_user_id: 'A' })],
+      }),
+    ]);
+  });
+  it('should include pending invites in the update household response', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    await serviceA.inviteUsers(id, ['B']);
+    const updatedHousehold = await serviceA.updateHousehold(id, { name: 'C' });
+    expect(updatedHousehold).toEqual(
+      expect.objectContaining({
+        name: 'C',
+        pending_invites: [expect.objectContaining({ invited_user: 'B', household_id: id, invited_by_user_id: 'A' })],
+      }),
     );
   });
 });

@@ -26,7 +26,7 @@ export class UserHouseholdsService {
     if (error) {
       throw this.handleSupabaseError(error, household);
     }
-    return data[0];
+    return { ...data[0], pending_invites: [] };
   }
 
   async deleteHousehold(id: number) {
@@ -45,7 +45,7 @@ export class UserHouseholdsService {
     if (error) {
       throw this.handleSupabaseError(error, household);
     }
-    return data[0];
+    return await this.addPendingInvitations(data[0]);
   }
 
   handleSupabaseError(error: PostgrestError, household: Household) {
@@ -57,7 +57,7 @@ export class UserHouseholdsService {
 
   async getUserHouseholds() {
     const { data } = await this.supabase.from('households').select('*').order('created_at', { ascending: false });
-    return data;
+    return data && Promise.all(data.map(async (household) => await this.addPendingInvitations(household)));
 
     // Get members for each household
     // return await Promise.all(
@@ -85,13 +85,28 @@ export class UserHouseholdsService {
     // );
   }
 
+  async addPendingInvitations(household: { id: number }) {
+    const { data: pending_invites } = await this.supabase
+      .from('household_invitations')
+      .select('*')
+      .eq('household_id', household.id);
+
+    return {
+      ...household,
+      pending_invites,
+    };
+  }
+
   async inviteUsers(householdId: number, emails: string[]) {
     const household = await this.getHousehold(householdId);
     if (emails.includes(household.created_by)) throw new InvitedUserIsOwnerError();
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from('household_invitations')
       .insert(emails.map((email) => ({ invited_user: email, household_id: householdId })))
       .select();
+    if (error) {
+      throw new DuplicateEntityError('User already invited');
+    }
     return data;
   }
 }

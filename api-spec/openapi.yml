@@ -259,6 +259,7 @@ components:
         - created_at
         - created_by
         - updated_at
+        - pending_invites
       properties:
         id:
           type: integer
@@ -276,6 +277,11 @@ components:
           type: string
           format: date-time
           readOnly: true
+        pending_invites:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/HouseholdInvitation'
         members:
           type: array
           readOnly: true
