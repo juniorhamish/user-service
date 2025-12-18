@@ -8,8 +8,13 @@ import {
 import { getSupabaseClient } from '../lib/supabase.js';
 
 export type Household = {
+  id: number;
   name: string;
+  updated_at: string | null;
+  created_at: string | null;
+  created_by: string;
 };
+export type WritableHousehold = { name: string };
 export type HouseholdInvitation = {
   invited_user: string;
 };
@@ -21,7 +26,7 @@ export class UserHouseholdsService {
     this.supabase = getSupabaseClient(user);
   }
 
-  async createHousehold(household: Household) {
+  async createHousehold(household: WritableHousehold) {
     const { data, error } = await this.supabase.from('households').insert(household).select();
     if (error) {
       throw this.handleSupabaseError(error, household);
@@ -39,7 +44,7 @@ export class UserHouseholdsService {
     return data[0];
   }
 
-  async updateHousehold(id: number, household: Household) {
+  async updateHousehold(id: number, household: WritableHousehold) {
     await this.getHousehold(id);
     const { data, error } = await this.supabase.from('households').update(household).eq('id', id).select();
     if (error) {
@@ -48,7 +53,7 @@ export class UserHouseholdsService {
     return await this.addPendingInvitations(data[0]);
   }
 
-  handleSupabaseError(error: PostgrestError, household: Household) {
+  handleSupabaseError(error: PostgrestError, household: WritableHousehold) {
     if (error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
       return new DuplicateEntityError(`Household with name ${household.name} already exists`);
     }
@@ -85,7 +90,7 @@ export class UserHouseholdsService {
     // );
   }
 
-  async addPendingInvitations(household: { id: number }) {
+  async addPendingInvitations(household: Household) {
     const { data: pending_invites } = await this.supabase
       .from('household_invitations')
       .select('*')
