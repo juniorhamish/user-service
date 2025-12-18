@@ -16,26 +16,26 @@ DROP POLICY IF EXISTS "Users can view own households" ON user_service.households
 CREATE POLICY "Users can view own households" ON user_service.households
     FOR SELECT TO public
     USING (
-        (SELECT auth.jwt() ->> 'sub') = created_by
+        ((SELECT auth.jwt()) ->> 'sub') = created_by
     );
 
 DROP POLICY IF EXISTS "Users can create households" ON user_service.households;
 CREATE POLICY "Users can create households" ON user_service.households
     FOR INSERT TO public
     WITH CHECK (
-        (SELECT auth.jwt() ->> 'sub') = created_by
+        ((SELECT auth.jwt()) ->> 'sub') = created_by
     );
 
 DROP POLICY IF EXISTS "Users can delete own households" ON user_service.households;
 CREATE POLICY "Users can delete own households" ON user_service.households
     FOR DELETE TO public
     USING (
-        (SELECT auth.jwt() ->> 'sub') = created_by
+        ((SELECT auth.jwt()) ->> 'sub') = created_by
     );
 
 DROP POLICY IF EXISTS "Users can update own households" ON user_service.households;
 CREATE POLICY "Users can update own households" ON user_service.households
     FOR UPDATE TO public
     USING (
-        (SELECT auth.jwt() ->> 'sub') = created_by
+        ((SELECT auth.jwt()) ->> 'sub') = created_by
     );

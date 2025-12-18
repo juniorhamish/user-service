@@ -24,9 +24,9 @@ DROP POLICY IF EXISTS "Users can create invitations for households they own" ON 
 CREATE POLICY "Users can create invitations for households they own" ON user_service.household_invitations
     FOR INSERT TO public
     WITH CHECK (
-    (SELECT auth.jwt() ->> 'sub') = (SELECT created_by
-                                     from user_service.households
-                                     WHERE id = household_id)
+    ((SELECT auth.jwt()) ->> 'sub') = (SELECT created_by
+                                       from user_service.households
+                                       WHERE id = household_id)
     );
 
 DROP POLICY IF EXISTS "Users can delete own invitations" ON user_service.household_invitations;

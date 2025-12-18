@@ -82,6 +82,8 @@ router.post('/:id/invitations', async (request, response, next) => {
       } catch (error) {
         if (error instanceof InvitedUserIsOwnerError) {
           next(createError(400, error.message));
+        } else if (error instanceof DuplicateEntityError) {
+          next(createError(409, error.message));
         } else if (error instanceof Error) {
           next(createError(500, error.message));
         } else {
