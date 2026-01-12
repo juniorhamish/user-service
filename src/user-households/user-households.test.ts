@@ -93,7 +93,7 @@ describe('user households routes', () => {
     });
     describe('delete household invitation', () => {
       it('should throw an error if the user ID has not been set in the request', async () => {
-        const response = await request(app).delete('/api/v1/households/1/invitations/1').send();
+        const response = await request(app).delete('/api/v1/invitations/1').send();
 
         expect(response.body).toEqual({
           status: 401,
