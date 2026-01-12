@@ -13,13 +13,6 @@ CREATE INDEX IF NOT EXISTS idx_household_invitations_household_id ON user_servic
 ALTER TABLE user_service.household_invitations
     ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Users can view own invitations" ON user_service.household_invitations;
-CREATE POLICY "Users can view own invitations" ON user_service.household_invitations
-    FOR SELECT TO public
-    USING (
-    true
-    );
-
 DROP POLICY IF EXISTS "Users can create invitations for households they own" ON user_service.household_invitations;
 CREATE POLICY "Users can create invitations for households they own" ON user_service.household_invitations
     FOR INSERT TO public
