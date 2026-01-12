@@ -14,6 +14,7 @@ const createUserHouseholdMock = vi.hoisted(() => vi.fn());
 const deleteUserHouseholdMock = vi.hoisted(() => vi.fn());
 const updateUserHouseholdMock = vi.hoisted(() => vi.fn());
 const inviteUserToHouseholdMock = vi.hoisted(() => vi.fn());
+const deleteHouseholdInvitationMock = vi.hoisted(() => vi.fn());
 vi.mock('./user-households-service.js', () => {
   const UserHouseholdsService = vi.fn(
     class {
@@ -22,6 +23,7 @@ vi.mock('./user-households-service.js', () => {
       deleteHousehold = deleteUserHouseholdMock;
       updateHousehold = updateUserHouseholdMock;
       inviteUsers = inviteUserToHouseholdMock;
+      deleteInvitation = deleteHouseholdInvitationMock;
     },
   );
   return { UserHouseholdsService };
@@ -82,6 +84,16 @@ describe('user households routes', () => {
         const response = await request(app)
           .post('/api/v1/households/1/invitations')
           .send([{ invited_user: 'dave@foo.com' }]);
+
+        expect(response.body).toEqual({
+          status: 401,
+          message: 'Invalid credentials',
+        });
+      });
+    });
+    describe('delete household invitation', () => {
+      it('should throw an error if the user ID has not been set in the request', async () => {
+        const response = await request(app).delete('/api/v1/households/1/invitations/1').send();
 
         expect(response.body).toEqual({
           status: 401,
@@ -444,6 +456,33 @@ describe('user households routes', () => {
         expect(response.body).toEqual({
           message: 'User already invited',
           status: 409,
+        });
+      });
+    });
+    describe('delete household invite', () => {
+      it('should return a 204 status when the deletion is successful', async () => {
+        deleteHouseholdInvitationMock.mockResolvedValue(0);
+        const response = await request(app).delete('/api/v1/invitations/2').send();
+        expect(UserHouseholdsService).toHaveBeenCalledWith('UserID');
+        expect(deleteHouseholdInvitationMock).toHaveBeenCalledWith(2);
+        expect(response.status).toEqual(204);
+      });
+      it('should respond with a 500 if there is an unknown error', async () => {
+        deleteHouseholdInvitationMock.mockRejectedValue(new Error('Unknown error'));
+        const response = await request(app).delete('/api/v1/invitations/1').send();
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'Unknown error',
+          status: 500,
+        });
+      });
+      it('should respond with a 500 if there is an error', async () => {
+        deleteHouseholdInvitationMock.mockRejectedValue({});
+        const response = await request(app).delete('/api/v1/invitations/23').send();
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'An unknown error occurred.',
+          status: 500,
         });
       });
     });

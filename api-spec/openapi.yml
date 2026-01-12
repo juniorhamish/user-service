@@ -188,6 +188,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /invitations/{invitationId}:
+    delete:
+      tags:
+        - households
+      summary: remove an invitation from a household
+      description: remove an invitation from a household
+      operationId: deleteHouseholdInvitation
+      parameters:
+        - in: path
+          name: invitationId
+          schema:
+            type: integer
+          required: true
+      responses:
+        204:
+          description: success
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     BaseUser:

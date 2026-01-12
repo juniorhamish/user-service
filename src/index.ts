@@ -9,6 +9,7 @@ import logger from 'morgan';
 import { generalErrorHandler, notFoundHandler } from './error-handler.js';
 import householdsRouter from './routes/user-households-router.js';
 import userInfoRouter from './routes/user-info-router.js';
+import invitationsRouter from './routes/user-invitations-router.js';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -45,6 +46,7 @@ app.use(
 // Routes
 app.use('/api/v1/user-info', userInfoRouter);
 app.use('/api/v1/households', householdsRouter);
+app.use('/api/v1/invitations', invitationsRouter);
 // Error handlers
 app.use(generalErrorHandler, notFoundHandler);
 

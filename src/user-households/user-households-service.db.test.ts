@@ -150,4 +150,27 @@ describe('user households service', () => {
     const { updated_at: new_updated_at } = await serviceA.updateHousehold(id, { name: 'C' });
     expect(updated_at).not.toEqual(new_updated_at);
   });
+  it('should remove the pending invitation when user rejects invitation to household', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['B']);
+    await serviceB.deleteInvitation(invitations[0].id);
+    const households = await serviceA.getUserHouseholds();
+    expect(households).toEqual([expect.objectContaining({ name: 'A', pending_invites: [] })]);
+  });
+  it('should remove the pending invitation when the inviter revokes invitation', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['B']);
+    await serviceA.deleteInvitation(invitations[0].id);
+    const households = await serviceA.getUserHouseholds();
+    expect(households).toEqual([expect.objectContaining({ name: 'A', pending_invites: [] })]);
+  });
+  it('should not be possible to reject an invitation if you are not the invitee or inviter', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['C']);
+    await serviceB.deleteInvitation(invitations[0].id);
+    const households = await serviceA.getUserHouseholds();
+    expect(households).toEqual([
+      expect.objectContaining({ name: 'A', pending_invites: [expect.objectContaining({ invited_user: 'C' })] }),
+    ]);
+  });
 });

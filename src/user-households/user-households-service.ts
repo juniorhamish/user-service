@@ -114,4 +114,11 @@ export class UserHouseholdsService {
     }
     return data;
   }
+
+  async deleteInvitation(invitationId: number) {
+    const { error } = await this.supabase.from('household_invitations').delete().eq('id', invitationId);
+    if (error) {
+      throw error;
+    }
+  }
 }

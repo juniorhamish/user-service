@@ -28,17 +28,3 @@ CREATE POLICY "Users can create invitations for households they own" ON user_ser
                                        from user_service.households
                                        WHERE id = household_id)
     );
-
-DROP POLICY IF EXISTS "Users can delete own invitations" ON user_service.household_invitations;
-CREATE POLICY "Users can delete own invitations" ON user_service.household_invitations
-    FOR DELETE TO public
-    USING (
-    true
-    );
-
-DROP POLICY IF EXISTS "Users can update own invitations" ON user_service.household_invitations;
-CREATE POLICY "Users can update own invitations" ON user_service.household_invitations
-    FOR UPDATE TO public
-    USING (
-    true
-    );
