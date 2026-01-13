@@ -210,6 +210,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /invitations/{invitationId}/accept:
+    post:
+      tags:
+        - households
+      summary: accept an invitation to join a household
+      description: accept an invitation to join a household
+      operationId: acceptHouseholdInvitation
+      parameters:
+        - in: path
+          name: invitationId
+          schema:
+            type: integer
+          required: true
+      responses:
+        204:
+          description: success
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     BaseUser:
@@ -261,14 +283,11 @@ components:
       required:
         - id
         - user_id
-        - role
         - joined_at
       properties:
         id:
           type: integer
         user_id:
-          type: string
-        role:
           type: string
         joined_at:
           type: string
@@ -282,6 +301,7 @@ components:
         - created_by
         - updated_at
         - pending_invites
+        - members
       properties:
         id:
           type: integer

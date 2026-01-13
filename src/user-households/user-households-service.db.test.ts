@@ -22,7 +22,13 @@ describe('user households service', () => {
   });
   it('should return the created household', async () => {
     const result = await serviceA.createHousehold({ name: 'Test Household' });
-    expect(result).toEqual(expect.objectContaining({ name: 'Test Household', pending_invites: [] }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        name: 'Test Household',
+        pending_invites: [],
+        members: [expect.objectContaining({ user_id: 'A' })],
+      }),
+    );
   });
   it('should return only the households created by themself', async () => {
     await serviceA.createHousehold({ name: 'A' });
@@ -134,7 +140,7 @@ describe('user households service', () => {
       }),
     ]);
   });
-  it('should include pending invites in the update household response', async () => {
+  it('should include pending invites and members in the update household response', async () => {
     const { id } = await serviceA.createHousehold({ name: 'A' });
     await serviceA.inviteUsers(id, ['B']);
     const updatedHousehold = await serviceA.updateHousehold(id, { name: 'C' });
@@ -142,6 +148,7 @@ describe('user households service', () => {
       expect.objectContaining({
         name: 'C',
         pending_invites: [expect.objectContaining({ invited_user: 'B', household_id: id, invited_by_user_id: 'A' })],
+        members: [expect.objectContaining({ user_id: 'A', household_id: id })],
       }),
     );
   });
@@ -172,5 +179,34 @@ describe('user households service', () => {
     expect(households).toEqual([
       expect.objectContaining({ name: 'A', pending_invites: [expect.objectContaining({ invited_user: 'C' })] }),
     ]);
+  });
+  it('should add the user to the household members and remove the invitation when they accept', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['B']);
+    await serviceB.acceptInvitation(invitations[0].id);
+
+    const households = await serviceA.getUserHouseholds();
+    expect(households[0].pending_invites).toEqual([]);
+    expect(households[0].members).toEqual(
+      expect.arrayContaining([expect.objectContaining({ user_id: 'A' }), expect.objectContaining({ user_id: 'B' })]),
+    );
+
+    const householdsB = await serviceB.getUserHouseholds();
+    expect(householdsB).toEqual([expect.objectContaining({ name: 'A' })]);
+  });
+  it('should throw an error if the user tries to accept an invitation that is not for them', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['C']);
+    await expect(serviceB.acceptInvitation(invitations[0].id)).rejects.toThrowError(
+      `Invitation with id ${invitations[0].id} not found`,
+    );
+  });
+  it('should throw an error if the inviter tries to accept an invitation on the invitees behalf', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['C']);
+    await expect(serviceA.acceptInvitation(invitations[0].id)).rejects.toThrowError('This invitation is not for you');
+  });
+  it('should throw an error if the invitation does not exist', async () => {
+    await expect(serviceA.acceptInvitation(99999)).rejects.toThrowError('Invitation with id 99999 not found');
   });
 });

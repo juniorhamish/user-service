@@ -1,6 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { DuplicateEntityError, InvitedUserIsOwnerError, NotFoundError } from '../db-error-handling/supabase-errors.js';
+import {
+  DuplicateEntityError,
+  ForbiddenError,
+  InvitedUserIsOwnerError,
+  NotFoundError,
+} from '../db-error-handling/supabase-errors.js';
 import app from '../index.js';
 import { UserHouseholdsService } from './user-households-service.js';
 
@@ -15,6 +20,7 @@ const deleteUserHouseholdMock = vi.hoisted(() => vi.fn());
 const updateUserHouseholdMock = vi.hoisted(() => vi.fn());
 const inviteUserToHouseholdMock = vi.hoisted(() => vi.fn());
 const deleteHouseholdInvitationMock = vi.hoisted(() => vi.fn());
+const acceptHouseholdInvitationMock = vi.hoisted(() => vi.fn());
 vi.mock('./user-households-service.js', () => {
   const UserHouseholdsService = vi.fn(
     class {
@@ -24,6 +30,7 @@ vi.mock('./user-households-service.js', () => {
       updateHousehold = updateUserHouseholdMock;
       inviteUsers = inviteUserToHouseholdMock;
       deleteInvitation = deleteHouseholdInvitationMock;
+      acceptInvitation = acceptHouseholdInvitationMock;
     },
   );
   return { UserHouseholdsService };
@@ -101,6 +108,16 @@ describe('user households routes', () => {
         });
       });
     });
+    describe('accept household invitation', () => {
+      it('should throw an error if the user ID has not been set in the request', async () => {
+        const response = await request(app).post('/api/v1/invitations/1/accept').send();
+
+        expect(response.body).toEqual({
+          status: 401,
+          message: 'Invalid credentials',
+        });
+      });
+    });
   });
   describe('authenticated', () => {
     beforeEach(() => {
@@ -121,10 +138,19 @@ describe('user households routes', () => {
           {
             id: 1,
             name: 'Dave',
-            created_by: '',
+            created_by: 'bar@foo.com',
             created_at: '2025-01-01T00:00:00Z',
             updated_at: '2025-01-01T00:00:00Z',
-            pending_invites: [],
+            pending_invites: [
+              {
+                invited_by_user_id: 'bar@foo.com',
+                id: 99,
+                household_id: 1,
+                invited_user: 'foo@bar.com',
+                invited_at: '2026-01-13T22:09:05Z',
+              },
+            ],
+            members: [{ id: 123, household_id: 1, user_id: 'bar@foo.com', joined_at: '2025-01-01T00:00:00Z' }],
           },
         ]);
         const response = await request(app).get('/api/v1/households').send();
@@ -135,10 +161,19 @@ describe('user households routes', () => {
           {
             id: 1,
             name: 'Dave',
-            created_by: '',
+            created_by: 'bar@foo.com',
             created_at: '2025-01-01T00:00:00Z',
             updated_at: '2025-01-01T00:00:00Z',
-            pending_invites: [],
+            pending_invites: [
+              {
+                invited_by_user_id: 'bar@foo.com',
+                id: 99,
+                household_id: 1,
+                invited_user: 'foo@bar.com',
+                invited_at: '2026-01-13T22:09:05Z',
+              },
+            ],
+            members: [{ id: 123, household_id: 1, user_id: 'bar@foo.com', joined_at: '2025-01-01T00:00:00Z' }],
           },
         ]);
       });
@@ -152,6 +187,7 @@ describe('user households routes', () => {
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
           pending_invites: [],
+          members: [],
         });
         const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
 
@@ -165,6 +201,7 @@ describe('user households routes', () => {
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
           pending_invites: [],
+          members: [],
         });
       });
       it('should return a 409 status code when the household already exists', async () => {
@@ -205,6 +242,7 @@ describe('user households routes', () => {
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
           pending_invites: [],
+          members: [],
         });
         const response = await request(app).patch('/api/v1/households/1').send({ name: 'Dave' });
 
@@ -218,6 +256,7 @@ describe('user households routes', () => {
           created_at: '2025-01-01T00:00:00Z',
           updated_at: '2025-01-01T00:00:00Z',
           pending_invites: [],
+          members: [],
         });
       });
       it('should return a 409 status code when updating name to match an existing household', async () => {
@@ -479,6 +518,51 @@ describe('user households routes', () => {
       it('should respond with a 500 if there is an error', async () => {
         deleteHouseholdInvitationMock.mockRejectedValue({});
         const response = await request(app).delete('/api/v1/invitations/23').send();
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'An unknown error occurred.',
+          status: 500,
+        });
+      });
+    });
+    describe('accept household invitation', () => {
+      it('should return a 204 status when the acceptance is successful', async () => {
+        acceptHouseholdInvitationMock.mockResolvedValue(undefined);
+        const response = await request(app).post('/api/v1/invitations/1/accept').send();
+        expect(UserHouseholdsService).toHaveBeenCalledWith('UserID');
+        expect(acceptHouseholdInvitationMock).toHaveBeenCalledWith(1);
+        expect(response.status).toEqual(204);
+      });
+      it('should respond with a 404 if the invitation does not exist', async () => {
+        acceptHouseholdInvitationMock.mockRejectedValue(new NotFoundError('Invitation not found'));
+        const response = await request(app).post('/api/v1/invitations/1/accept').send();
+        expect(response.status).toEqual(404);
+        expect(response.body).toEqual({
+          message: 'Invitation not found',
+          status: 404,
+        });
+      });
+      it('should respond with a 403 if the invitation is not for the user', async () => {
+        acceptHouseholdInvitationMock.mockRejectedValue(new ForbiddenError('This invitation is not for you'));
+        const response = await request(app).post('/api/v1/invitations/1/accept').send();
+        expect(response.status).toEqual(403);
+        expect(response.body).toEqual({
+          message: 'This invitation is not for you',
+          status: 403,
+        });
+      });
+      it('should respond with a 500 if there is an unknown error', async () => {
+        acceptHouseholdInvitationMock.mockRejectedValue(new Error('Unknown error'));
+        const response = await request(app).post('/api/v1/invitations/1/accept').send();
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'Unknown error',
+          status: 500,
+        });
+      });
+      it('should respond with a 500 if there is an error', async () => {
+        acceptHouseholdInvitationMock.mockRejectedValue({});
+        const response = await request(app).post('/api/v1/invitations/1/accept').send();
         expect(response.status).toEqual(500);
         expect(response.body).toEqual({
           message: 'An unknown error occurred.',
