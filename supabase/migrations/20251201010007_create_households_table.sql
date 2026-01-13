@@ -12,13 +12,6 @@ CREATE INDEX IF NOT EXISTS idx_households_created_by ON user_service.households 
 ALTER TABLE user_service.households
     ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Users can view own households" ON user_service.households;
-CREATE POLICY "Users can view own households" ON user_service.households
-    FOR SELECT TO public
-    USING (
-        ((SELECT auth.jwt()) ->> 'sub') = created_by
-    );
-
 DROP POLICY IF EXISTS "Users can create households" ON user_service.households;
 CREATE POLICY "Users can create households" ON user_service.households
     FOR INSERT TO public

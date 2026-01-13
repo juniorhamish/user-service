@@ -40,6 +40,35 @@ export type Database = {
           },
         ];
       };
+      household_members: {
+        Row: {
+          household_id: number;
+          id: number;
+          joined_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          household_id: number;
+          id?: number;
+          joined_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          household_id?: number;
+          id?: number;
+          joined_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'household_members_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       households: {
         Row: {
           created_at: string | null;
@@ -69,7 +98,8 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_household_member: { Args: { h_id: number }; Returns: boolean };
+      is_household_owner: { Args: { household_id: number }; Returns: boolean };
     };
     Enums: {
       [_ in never]: never;

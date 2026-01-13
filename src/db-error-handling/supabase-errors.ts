@@ -19,3 +19,9 @@ export class NotFoundError extends Error {
     super(message);
   }
 }
+
+export class ForbiddenError extends Error {
+  constructor(message = 'Forbidden') {
+    super(message);
+  }
+}

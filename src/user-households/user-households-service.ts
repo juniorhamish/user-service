@@ -2,10 +2,17 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import {
   DATABASE_ERROR_CODES,
   DuplicateEntityError,
+  ForbiddenError,
   InvitedUserIsOwnerError,
   NotFoundError,
 } from '../db-error-handling/supabase-errors.js';
 import { getSupabaseClient } from '../lib/supabase.js';
+
+export type HouseholdMember = {
+  id: number;
+  user_id: string;
+  joined_at: string;
+};
 
 export type Household = {
   id: number;
@@ -13,16 +20,24 @@ export type Household = {
   updated_at: string | null;
   created_at: string | null;
   created_by: string;
+  members?: HouseholdMember[];
+  pending_invites?: HouseholdInvitation[];
 };
 export type WritableHousehold = { name: string };
 export type HouseholdInvitation = {
+  id: number;
+  household_id: number;
   invited_user: string;
+  invited_by_user_id: string;
+  invited_at: string | null;
 };
 
 export class UserHouseholdsService {
   private readonly supabase;
+  private readonly user: string;
 
   constructor(user: string) {
+    this.user = user;
     this.supabase = getSupabaseClient(user);
   }
 
@@ -31,7 +46,7 @@ export class UserHouseholdsService {
     if (error) {
       throw this.handleSupabaseError(error, household);
     }
-    return { ...data[0], pending_invites: [] };
+    return await this.enrichHousehold(data[0]);
   }
 
   async deleteHousehold(id: number) {
@@ -41,7 +56,7 @@ export class UserHouseholdsService {
   async getHousehold(id: number) {
     const { data } = await this.supabase.from('households').select().eq('id', id);
     if (!data || data.length === 0) throw new NotFoundError(`Household with id ${id} not found`);
-    return data[0];
+    return await this.enrichHousehold(data[0]);
   }
 
   async updateHousehold(id: number, household: WritableHousehold) {
@@ -50,7 +65,7 @@ export class UserHouseholdsService {
     if (error) {
       throw this.handleSupabaseError(error, household);
     }
-    return await this.addPendingInvitations(data[0]);
+    return await this.enrichHousehold(data[0]);
   }
 
   handleSupabaseError(error: PostgrestError, household: WritableHousehold) {
@@ -61,44 +76,28 @@ export class UserHouseholdsService {
   }
 
   async getUserHouseholds() {
-    const { data } = await this.supabase.from('households').select('*').order('created_at', { ascending: false });
-    return data && Promise.all(data.map(async (household) => await this.addPendingInvitations(household)));
+    const { data, error } = await this.supabase
+      .from('households')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    // Get members for each household
-    // return await Promise.all(
-    //   households.map(async (household) => {
-    //     const { data: members, error: membersError } = await this.supabase
-    //       .from('household_members')
-    //       .select('*')
-    //       .eq('household_id', household.id);
-    //
-    //     if (membersError) throw membersError;
-    //
-    //     const { firstName, lastName } = await getUserInfo(household.created_by);
-    //
-    //     return {
-    //       ...household,
-    //       created_by: `${firstName} ${lastName}`,
-    //       members: members.map((m) => ({
-    //         id: m.id,
-    //         user_id: m.user_id,
-    //         role: m.role,
-    //         joined_at: m.joined_at,
-    //       })),
-    //     };
-    //   }),
-    // );
+    /* v8 ignore if -- @preserve */
+    if (error) {
+      throw error;
+    }
+    return Promise.all(data.map(async (household) => await this.enrichHousehold(household)));
   }
 
-  async addPendingInvitations(household: Household) {
-    const { data: pending_invites } = await this.supabase
-      .from('household_invitations')
-      .select('*')
-      .eq('household_id', household.id);
+  async enrichHousehold(household: Household) {
+    const [{ data: pending_invites }, { data: members }] = await Promise.all([
+      this.supabase.from('household_invitations').select('*').eq('household_id', household.id),
+      this.supabase.from('household_members').select('*').eq('household_id', household.id),
+    ]);
 
     return {
       ...household,
       pending_invites,
+      members,
     };
   }
 
@@ -116,6 +115,27 @@ export class UserHouseholdsService {
   }
 
   async deleteInvitation(invitationId: number) {
+    await this.supabase.from('household_invitations').delete().eq('id', invitationId);
+  }
+
+  async acceptInvitation(invitationId: number) {
+    const { data: invitation, error: fetchError } = await this.supabase
+      .from('household_invitations')
+      .select('*')
+      .eq('id', invitationId)
+      .single();
+
+    if (fetchError) {
+      throw new NotFoundError(`Invitation with id ${invitationId} not found`);
+    }
+    if (invitation.invited_user !== this.user) {
+      throw new ForbiddenError('This invitation is not for you');
+    }
+
+    await this.supabase.from('household_members').insert({
+      household_id: invitation.household_id,
+      user_id: this.user,
+    });
     await this.supabase.from('household_invitations').delete().eq('id', invitationId);
   }
 }

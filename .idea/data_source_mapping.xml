@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/supabase/migrations/20260113204314_accept_invitation.sql" value="75c7afe4-ca52-4db1-9fad-17f0f0cda126" />
+  </component>
+</project>
