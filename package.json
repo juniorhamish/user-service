@@ -11,12 +11,10 @@
     "test:unit": "vitest run --project unit",
     "test:db": "vitest run --project db",
     "check": "biome check",
-    "format": "biome check --write --unsafe",
-    "types": "supabase gen types typescript --project-id=xlzyfsfxuvxlbdrstnec --schema=user_service > src/types/database.types.ts",
-    "posttypes": "npm run format"
+    "format": "biome check --write --unsafe"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.90.1",
+    "@neondatabase/serverless": "^1.0.2",
     "auth0": "^5.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -38,7 +36,6 @@
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.16",
     "globals": "^17.0.0",
-    "supabase": "^2.72.4",
     "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

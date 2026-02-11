@@ -5,7 +5,7 @@ import {
   ForbiddenError,
   InvitedUserIsOwnerError,
   NotFoundError,
-} from '../db-error-handling/supabase-errors.js';
+} from '../db-error-handling/db-errors.js';
 import app from '../index.js';
 import { UserHouseholdsService } from './user-households-service.js';
 

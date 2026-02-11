@@ -1,12 +1,12 @@
-import type { PostgrestError } from '@supabase/supabase-js';
+import { DatabaseError } from '@neondatabase/serverless';
 import {
   DATABASE_ERROR_CODES,
   DuplicateEntityError,
   ForbiddenError,
   InvitedUserIsOwnerError,
   NotFoundError,
-} from '../db-error-handling/supabase-errors.js';
-import { getSupabaseClient } from '../lib/supabase.js';
+} from '../db-error-handling/db-errors.js';
+import { query } from '../lib/db.js';
 
 export type HouseholdMember = {
   id: number;
@@ -33,65 +33,77 @@ export type HouseholdInvitation = {
 };
 
 export class UserHouseholdsService {
-  private readonly supabase;
   private readonly user: string;
 
   constructor(user: string) {
     this.user = user;
-    this.supabase = getSupabaseClient(user);
   }
 
   async createHousehold(household: WritableHousehold) {
-    const { data, error } = await this.supabase.from('households').insert(household).select();
-    if (error) {
-      throw this.handleSupabaseError(error, household);
+    try {
+      const { rows } = await query(
+        'INSERT INTO user_service.households (name, created_by) VALUES ($1, $2) RETURNING *',
+        [household.name, this.user],
+      );
+      const createdHousehold = rows[0];
+      await query('INSERT INTO user_service.household_members (household_id, user_id) VALUES ($1, $2)', [
+        createdHousehold.id,
+        this.user,
+      ]);
+      return await this.enrichHousehold(createdHousehold);
+    } catch (error) {
+      throw this.handleDatabaseError(error, household);
     }
-    return await this.enrichHousehold(data[0]);
   }
 
   async deleteHousehold(id: number) {
-    await this.supabase.from('households').delete().eq('id', id);
+    await query('DELETE FROM user_service.households WHERE id = $1 AND created_by = $2', [id, this.user]);
   }
 
   async getHousehold(id: number) {
-    const { data } = await this.supabase.from('households').select().eq('id', id);
-    if (!data || data.length === 0) throw new NotFoundError(`Household with id ${id} not found`);
-    return await this.enrichHousehold(data[0]);
+    const { rows } = await query(
+      `SELECT * FROM user_service.households 
+       WHERE id = $1 AND (created_by = $2 OR id IN (SELECT household_id FROM user_service.household_members WHERE user_id = $2))`,
+      [id, this.user],
+    );
+    if (rows.length === 0) throw new NotFoundError(`Household with id ${id} not found`);
+    return await this.enrichHousehold(rows[0]);
   }
 
   async updateHousehold(id: number, household: WritableHousehold) {
     await this.getHousehold(id);
-    const { data, error } = await this.supabase.from('households').update(household).eq('id', id).select();
-    if (error) {
-      throw this.handleSupabaseError(error, household);
-    }
-    return await this.enrichHousehold(data[0]);
+    const { rows } = await query(
+      'UPDATE user_service.households SET name = $1, updated_at = NOW() WHERE id = $2 AND created_by = $3 RETURNING *',
+      [household.name, id, this.user],
+    ).catch((error) => {
+      throw this.handleDatabaseError(error, household);
+    });
+
+    if (rows.length === 0) throw new NotFoundError(`Household with id ${id} not found`);
+    return await this.enrichHousehold(rows[0]);
   }
 
-  handleSupabaseError(error: PostgrestError, household: WritableHousehold) {
-    if (error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
+  handleDatabaseError(error: unknown, household: WritableHousehold) {
+    if (error instanceof DatabaseError && error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
       return new DuplicateEntityError(`Household with name ${household.name} already exists`);
     }
     return error;
   }
 
   async getUserHouseholds() {
-    const { data, error } = await this.supabase
-      .from('households')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    /* v8 ignore if -- @preserve */
-    if (error) {
-      throw error;
-    }
-    return Promise.all(data.map(async (household) => await this.enrichHousehold(household)));
+    const { rows } = await query(
+      `SELECT * FROM user_service.households 
+       WHERE created_by = $1 OR id IN (SELECT household_id FROM user_service.household_members WHERE user_id = $1)
+       ORDER BY created_at DESC`,
+      [this.user],
+    );
+    return Promise.all(rows.map(async (household) => await this.enrichHousehold(household)));
   }
 
   async enrichHousehold(household: Household) {
-    const [{ data: pending_invites }, { data: members }] = await Promise.all([
-      this.supabase.from('household_invitations').select('*').eq('household_id', household.id),
-      this.supabase.from('household_members').select('*').eq('household_id', household.id),
+    const [{ rows: pending_invites }, { rows: members }] = await Promise.all([
+      query('SELECT * FROM user_service.household_invitations WHERE household_id = $1', [household.id]),
+      query('SELECT * FROM user_service.household_members WHERE household_id = $1', [household.id]),
     ]);
 
     return {
@@ -104,38 +116,58 @@ export class UserHouseholdsService {
   async inviteUsers(householdId: number, emails: string[]) {
     const household = await this.getHousehold(householdId);
     if (emails.includes(household.created_by)) throw new InvitedUserIsOwnerError();
-    const { data, error } = await this.supabase
-      .from('household_invitations')
-      .insert(emails.map((email) => ({ invited_user: email, household_id: householdId })))
-      .select();
-    if (error) {
-      throw new DuplicateEntityError('User already invited');
-    }
-    return data;
+
+    return await Promise.all(
+      emails.map(async (email) => {
+        const { rows } = await query(
+          'INSERT INTO user_service.household_invitations (invited_user, household_id, invited_by_user_id) VALUES ($1, $2, $3) RETURNING *',
+          [email, householdId, this.user],
+        ).catch((error) => {
+          if (error instanceof DatabaseError && error.code === DATABASE_ERROR_CODES.UNIQUE_VIOLATION) {
+            throw new DuplicateEntityError('User already invited');
+          }
+          throw error;
+        });
+        return rows[0];
+      }),
+    );
   }
 
   async deleteInvitation(invitationId: number) {
-    await this.supabase.from('household_invitations').delete().eq('id', invitationId);
+    // Check if user is owner of the household or the invited user
+    const { rows } = await query(
+      `SELECT i.* FROM user_service.household_invitations i
+       JOIN user_service.households h ON i.household_id = h.id
+       WHERE i.id = $1 AND (h.created_by = $2 OR i.invited_user = $2)`,
+      [invitationId, this.user],
+    );
+
+    if (rows.length > 0) {
+      await query('DELETE FROM user_service.household_invitations WHERE id = $1', [invitationId]);
+    }
   }
 
   async acceptInvitation(invitationId: number) {
-    const { data: invitation, error: fetchError } = await this.supabase
-      .from('household_invitations')
-      .select('*')
-      .eq('id', invitationId)
-      .single();
+    const { rows } = await query(
+      `SELECT i.* FROM user_service.household_invitations i
+       JOIN user_service.households h ON i.household_id = h.id
+       WHERE i.id = $1 AND (i.invited_user = $2 OR h.created_by = $2)`,
+      [invitationId, this.user],
+    );
 
-    if (fetchError) {
+    if (rows.length === 0) {
       throw new NotFoundError(`Invitation with id ${invitationId} not found`);
     }
+    const invitation = rows[0];
+
     if (invitation.invited_user !== this.user) {
       throw new ForbiddenError('This invitation is not for you');
     }
 
-    await this.supabase.from('household_members').insert({
-      household_id: invitation.household_id,
-      user_id: this.user,
-    });
-    await this.supabase.from('household_invitations').delete().eq('id', invitationId);
+    await query('INSERT INTO user_service.household_members (household_id, user_id) VALUES ($1, $2)', [
+      invitation.household_id,
+      this.user,
+    ]);
+    await query('DELETE FROM user_service.household_invitations WHERE id = $1', [invitationId]);
   }
 }

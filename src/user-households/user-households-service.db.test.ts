@@ -1,12 +1,11 @@
-import { getSupabaseClient } from '../lib/supabase.js';
+import { query } from '../lib/db.js';
 import { UserHouseholdsService } from './user-households-service.js';
 
 describe('user households service', () => {
   let serviceA: UserHouseholdsService;
   let serviceB: UserHouseholdsService;
   async function cleanDB() {
-    await getSupabaseClient('A').from('households').delete().eq('created_by', 'A');
-    await getSupabaseClient('B').from('households').delete().eq('created_by', 'B');
+    await query("DELETE FROM user_service.households WHERE created_by IN ('A', 'B')");
   }
   beforeEach(async () => {
     serviceA = new UserHouseholdsService('A');
@@ -50,9 +49,7 @@ describe('user households service', () => {
   });
   it('should throw an error when creating a household with invalid data', async () => {
     // @ts-expect-error
-    await expect((async () => await serviceA.createHousehold({ foo: 'A' }))()).rejects.toThrowError(
-      "Could not find the 'foo' column of 'households' in the schema cache",
-    );
+    await expect((async () => await serviceA.createHousehold({ foo: 'A' }))()).rejects.toThrow();
   });
   it('should be possible to create a household with the same name as another user', async () => {
     await serviceA.createHousehold({ name: 'A' });
@@ -82,6 +79,14 @@ describe('user households service', () => {
       `Household with id ${household.id} not found`,
     );
     expect(await serviceA.getUserHouseholds()).toEqual([expect.objectContaining({ name: 'A' })]);
+  });
+  it('should not be possible to update a household as a member who is not the owner', async () => {
+    const household = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household.id, ['B']);
+    await serviceB.acceptInvitation(invitations[0].id);
+    await expect(serviceB.updateHousehold(household.id, { name: 'B' })).rejects.toThrowError(
+      `Household with id ${household.id} not found`,
+    );
   });
   it('should not be possible to update a household to have the same name as an existing household', async () => {
     await serviceA.createHousehold({ name: 'A' });
@@ -128,6 +133,11 @@ describe('user households service', () => {
     const { id } = await serviceA.createHousehold({ name: 'A' });
     await serviceA.inviteUsers(id, ['B']);
     await expect((async () => await serviceA.inviteUsers(id, ['B']))()).rejects.toThrowError('User already invited');
+  });
+  it('should rethrow non-unique violation errors during invitation', async () => {
+    const { id } = await serviceA.createHousehold({ name: 'A' });
+    // @ts-expect-error - passing null to trigger NOT NULL violation
+    await expect(serviceA.inviteUsers(id, [null])).rejects.toThrow();
   });
   it('should include pending invites in the list of households response', async () => {
     const { id } = await serviceA.createHousehold({ name: 'A' });

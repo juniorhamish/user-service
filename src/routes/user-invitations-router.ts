@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { ForbiddenError, NotFoundError } from '../db-error-handling/supabase-errors.js';
+import { ForbiddenError, NotFoundError } from '../db-error-handling/db-errors.js';
 import { UserHouseholdsService } from '../user-households/user-households-service.js';
 
 const router = Router();
