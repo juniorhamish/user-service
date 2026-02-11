@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { TokenExchangeService } from '../token-exchange/token-exchange-service.js';
 import { ForbiddenError } from '../db-error-handling/supabase-errors.js';
+import { TokenExchangeService } from '../token-exchange/token-exchange-service.js';
 
 const router = Router();
 
@@ -31,7 +31,7 @@ router.post('/exchange', async (request, response, next) => {
   }
 });
 
-router.get('/public-key', (request, response, next) => {
+router.get('/public-key', (_request, response, next) => {
   try {
     const publicKey = TokenExchangeService.getPublicKey();
     response.status(200).json({ publicKey });

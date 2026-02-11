@@ -1,10 +1,17 @@
 import { decodeJwt, exportPKCS8, generateKeyPair } from 'jose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UserHouseholdsService } from '../user-households/user-households-service.js';
 import { ForbiddenError } from '../db-error-handling/supabase-errors.js';
 import { TokenExchangeService } from './token-exchange-service.js';
 
-vi.mock('../user-households/user-households-service.js');
+const getUserHouseholdsMock = vi.hoisted(() => vi.fn());
+vi.mock('../user-households/user-households-service.js', () => {
+  const UserHouseholdsService = vi.fn(
+    class {
+      getUserHouseholds = getUserHouseholdsMock;
+    },
+  );
+  return { UserHouseholdsService };
+});
 
 describe('TokenExchangeService', () => {
   const mockUser = 'test-user@example.com';
@@ -19,7 +26,7 @@ describe('TokenExchangeService', () => {
 
   it('should use "internal" as audience if none provided', async () => {
     const householdId = 123;
-    vi.mocked(UserHouseholdsService).prototype.getUserHouseholds.mockResolvedValue([{ id: householdId } as any]);
+    getUserHouseholdsMock.mockResolvedValue([{ id: householdId }]);
 
     const service = new TokenExchangeService(mockUser);
     const token = await service.exchangeToken(householdId);
@@ -30,7 +37,7 @@ describe('TokenExchangeService', () => {
 
   it('should use provided audience', async () => {
     const householdId = 123;
-    vi.mocked(UserHouseholdsService).prototype.getUserHouseholds.mockResolvedValue([{ id: householdId } as any]);
+    getUserHouseholdsMock.mockResolvedValue([{ id: householdId }]);
 
     const service = new TokenExchangeService(mockUser);
     const token = await service.exchangeToken(householdId, 'custom-audience');
@@ -41,7 +48,7 @@ describe('TokenExchangeService', () => {
 
   it('should throw error if user does not have access to household', async () => {
     const householdId = 123;
-    vi.mocked(UserHouseholdsService).prototype.getUserHouseholds.mockResolvedValue([{ id: 456 } as any]);
+    getUserHouseholdsMock.mockResolvedValue([{ id: 456 }]);
 
     const service = new TokenExchangeService(mockUser);
     await expect(service.exchangeToken(householdId)).rejects.toThrow(ForbiddenError);
@@ -50,11 +57,13 @@ describe('TokenExchangeService', () => {
 
   it('should throw error if private key is not set', async () => {
     const householdId = 123;
-    vi.mocked(UserHouseholdsService).prototype.getUserHouseholds.mockResolvedValue([{ id: householdId } as any]);
+    getUserHouseholdsMock.mockResolvedValue([{ id: householdId }]);
     vi.stubEnv('INTERNAL_JWT_PRIVATE_KEY', '');
 
     const service = new TokenExchangeService(mockUser);
-    await expect(service.exchangeToken(householdId)).rejects.toThrow('INTERNAL_JWT_PRIVATE_KEY environment variable not set');
+    await expect(service.exchangeToken(householdId)).rejects.toThrow(
+      'INTERNAL_JWT_PRIVATE_KEY environment variable not set',
+    );
   });
 
   describe('getPublicKey', () => {
