@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError } from '../db-error-handling/supabase-errors.js';
+import { ForbiddenError } from '../db-error-handling/db-errors.js';
 import app from '../index.js';
 import { TokenExchangeService } from './token-exchange-service.js';
 

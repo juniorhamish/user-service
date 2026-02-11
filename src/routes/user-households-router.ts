@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { DuplicateEntityError, InvitedUserIsOwnerError, NotFoundError } from '../db-error-handling/supabase-errors.js';
+import { DuplicateEntityError, InvitedUserIsOwnerError, NotFoundError } from '../db-error-handling/db-errors.js';
 import { type HouseholdInvitation, UserHouseholdsService } from '../user-households/user-households-service.js';
 
 const router = Router();

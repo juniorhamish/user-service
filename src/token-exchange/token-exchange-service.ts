@@ -1,5 +1,5 @@
 import { importPKCS8, SignJWT } from 'jose';
-import { ForbiddenError } from '../db-error-handling/supabase-errors.js';
+import { ForbiddenError } from '../db-error-handling/db-errors.js';
 import { UserHouseholdsService } from '../user-households/user-households-service.js';
 
 export class TokenExchangeService {

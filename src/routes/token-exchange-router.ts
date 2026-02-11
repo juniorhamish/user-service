@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { ForbiddenError } from '../db-error-handling/supabase-errors.js';
+import { ForbiddenError } from '../db-error-handling/db-errors.js';
 import { TokenExchangeService } from '../token-exchange/token-exchange-service.js';
 
 const router = Router();
