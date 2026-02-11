@@ -21,6 +21,7 @@ const updateUserHouseholdMock = vi.hoisted(() => vi.fn());
 const inviteUserToHouseholdMock = vi.hoisted(() => vi.fn());
 const deleteHouseholdInvitationMock = vi.hoisted(() => vi.fn());
 const acceptHouseholdInvitationMock = vi.hoisted(() => vi.fn());
+const removeHouseholdMemberMock = vi.hoisted(() => vi.fn());
 vi.mock('./user-households-service.js', () => {
   const UserHouseholdsService = vi.fn(
     class {
@@ -31,6 +32,7 @@ vi.mock('./user-households-service.js', () => {
       inviteUsers = inviteUserToHouseholdMock;
       deleteInvitation = deleteHouseholdInvitationMock;
       acceptInvitation = acceptHouseholdInvitationMock;
+      removeMember = removeHouseholdMemberMock;
     },
   );
   return { UserHouseholdsService };
@@ -111,6 +113,16 @@ describe('user households routes', () => {
     describe('accept household invitation', () => {
       it('should throw an error if the user ID has not been set in the request', async () => {
         const response = await request(app).post('/api/v1/invitations/1/accept').send();
+
+        expect(response.body).toEqual({
+          status: 401,
+          message: 'Invalid credentials',
+        });
+      });
+    });
+    describe('remove household member', () => {
+      it('should throw an error if the user ID has not been set in the request', async () => {
+        const response = await request(app).delete('/api/v1/households/1/members/1').send();
 
         expect(response.body).toEqual({
           status: 401,
@@ -563,6 +575,51 @@ describe('user households routes', () => {
       it('should respond with a 500 if there is an error', async () => {
         acceptHouseholdInvitationMock.mockRejectedValue({});
         const response = await request(app).post('/api/v1/invitations/1/accept').send();
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'An unknown error occurred.',
+          status: 500,
+        });
+      });
+    });
+    describe('remove household member', () => {
+      it('should return a 204 status when the removal is successful', async () => {
+        removeHouseholdMemberMock.mockResolvedValue(undefined);
+        const response = await request(app).delete('/api/v1/households/1/members/2').send();
+        expect(UserHouseholdsService).toHaveBeenCalledWith('UserID');
+        expect(removeHouseholdMemberMock).toHaveBeenCalledWith(1, 2);
+        expect(response.status).toEqual(204);
+      });
+      it('should respond with a 404 if the household or member does not exist', async () => {
+        removeHouseholdMemberMock.mockRejectedValue(new NotFoundError('Member not found'));
+        const response = await request(app).delete('/api/v1/households/1/members/2').send();
+        expect(response.status).toEqual(404);
+        expect(response.body).toEqual({
+          message: 'Member not found',
+          status: 404,
+        });
+      });
+      it('should respond with a 403 if the user is not allowed to remove the member', async () => {
+        removeHouseholdMemberMock.mockRejectedValue(new ForbiddenError('Forbidden'));
+        const response = await request(app).delete('/api/v1/households/1/members/2').send();
+        expect(response.status).toEqual(403);
+        expect(response.body).toEqual({
+          message: 'Forbidden',
+          status: 403,
+        });
+      });
+      it('should respond with a 500 if there is an unknown error', async () => {
+        removeHouseholdMemberMock.mockRejectedValue(new Error('Unknown error'));
+        const response = await request(app).delete('/api/v1/households/1/members/2').send();
+        expect(response.status).toEqual(500);
+        expect(response.body).toEqual({
+          message: 'Unknown error',
+          status: 500,
+        });
+      });
+      it('should respond with a 500 if there is an error', async () => {
+        removeHouseholdMemberMock.mockRejectedValue({});
+        const response = await request(app).delete('/api/v1/households/1/members/2').send();
         expect(response.status).toEqual(500);
         expect(response.body).toEqual({
           message: 'An unknown error occurred.',

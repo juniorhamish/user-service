@@ -232,7 +232,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /members/{memberId}:
+  /households/{householdId}/members/{memberId}:
     delete:
       tags:
         - households
@@ -240,6 +240,11 @@ paths:
       description: remove a member from a household
       operationId: removeHouseholdMember
       parameters:
+        - in: path
+          name: householdId
+          schema:
+            type: integer
+          required: true
         - in: path
           name: memberId
           schema:

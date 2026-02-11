@@ -4,12 +4,14 @@ import { UserHouseholdsService } from './user-households-service.js';
 describe('user households service', () => {
   let serviceA: UserHouseholdsService;
   let serviceB: UserHouseholdsService;
+  let serviceC: UserHouseholdsService;
   async function cleanDB() {
-    await query("DELETE FROM user_service.households WHERE created_by IN ('A', 'B')");
+    await query("DELETE FROM user_service.households WHERE created_by IN ('A', 'B', 'C')");
   }
   beforeEach(async () => {
     serviceA = new UserHouseholdsService('A');
     serviceB = new UserHouseholdsService('B');
+    serviceC = new UserHouseholdsService('C');
     await cleanDB();
   });
   afterEach(async () => {
@@ -219,4 +221,47 @@ describe('user households service', () => {
   it('should throw an error if the invitation does not exist', async () => {
     await expect(serviceA.acceptInvitation(99999)).rejects.toThrowError('Invitation with id 99999 not found');
   });
-}, 20000);
+  it('should throw an error if the household does not exist', async () => {
+    await expect(serviceA.removeMember(99999, 8888)).rejects.toThrowError('Household with id 99999 not found');
+  });
+  it('should throw an error if the household does not contain the member', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    await expect(serviceA.removeMember(household_id, 8888)).rejects.toThrowError(
+      `Member with id 8888 not found in household ${household_id}`,
+    );
+  });
+  it('should throw an error if the member to be deleted is the creator of the household', async () => {
+    const { id: household_id, members } = await serviceA.createHousehold({ name: 'A' });
+    await expect(serviceA.removeMember(household_id, members[0].id)).rejects.toThrowError(
+      'Cannot remove the creator of the household',
+    );
+  });
+  it('should throw an error if the user is neither the creator nor the member to deleted', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['B', 'C']);
+    await serviceB.acceptInvitation(invitations[0].id);
+    await serviceC.acceptInvitation(invitations[1].id);
+    const { members } = await serviceA.getHousehold(household_id);
+    await expect(
+      serviceC.removeMember(household_id, members.find((member) => member.user_id === 'B').id),
+    ).rejects.toThrowError('Only the household creator or the member themselves can remove a member');
+  });
+  it('should delete the member if the user is the creator', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['B']);
+    await serviceB.acceptInvitation(invitations[0].id);
+    const { members } = await serviceA.getHousehold(household_id);
+    await serviceA.removeMember(household_id, members.find((member) => member.user_id === 'B').id);
+    const { members: updated_members } = await serviceA.getHousehold(household_id);
+    expect(updated_members).toEqual([expect.objectContaining({ user_id: 'A' })]);
+  });
+  it('should delete the member if the user is the member', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    const invitations = await serviceA.inviteUsers(household_id, ['B']);
+    await serviceB.acceptInvitation(invitations[0].id);
+    const { members } = await serviceA.getHousehold(household_id);
+    await serviceB.removeMember(household_id, members.find((member) => member.user_id === 'B').id);
+    const { members: updated_members } = await serviceA.getHousehold(household_id);
+    expect(updated_members).toEqual([expect.objectContaining({ user_id: 'A' })]);
+  });
+}, 60000);

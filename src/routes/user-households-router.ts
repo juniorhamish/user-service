@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { DuplicateEntityError, InvitedUserIsOwnerError, NotFoundError } from '../db-error-handling/db-errors.js';
+import {
+  DuplicateEntityError,
+  ForbiddenError,
+  InvitedUserIsOwnerError,
+  NotFoundError,
+} from '../db-error-handling/db-errors.js';
 import { type HouseholdInvitation, UserHouseholdsService } from '../user-households/user-households-service.js';
 
 const router = Router();
@@ -92,6 +97,28 @@ router.post('/:id/invitations', async (request, response, next) => {
       }
     } else {
       next(createError(400, 'Request body includes the same email address multiple times'));
+    }
+  } else {
+    next(createError(401, 'Invalid credentials'));
+  }
+});
+router.delete('/:householdId/members/:memberId', async (request, response, next) => {
+  const userId = request.auth?.payload.email as string;
+  if (userId) {
+    const householdService = new UserHouseholdsService(userId);
+    try {
+      await householdService.removeMember(Number(request.params.householdId), Number(request.params.memberId));
+      response.sendStatus(204);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        next(createError(404, error.message));
+      } else if (error instanceof ForbiddenError) {
+        next(createError(403, error.message));
+      } else if (error instanceof Error) {
+        next(createError(500, error.message));
+      } else {
+        next(createError(500, 'An unknown error occurred.'));
+      }
     }
   } else {
     next(createError(401, 'Invalid credentials'));

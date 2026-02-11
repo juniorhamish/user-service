@@ -170,4 +170,26 @@ export class UserHouseholdsService {
     ]);
     await query('DELETE FROM user_service.household_invitations WHERE id = $1', [invitationId]);
   }
+
+  async removeMember(householdId: number, memberId: number) {
+    const household = await this.getHousehold(householdId);
+    const member = household.members?.find((m) => m.id === memberId);
+
+    if (!member) {
+      throw new NotFoundError(`Member with id ${memberId} not found in household ${householdId}`);
+    }
+
+    if (member.user_id === household.created_by) {
+      throw new ForbiddenError('Cannot remove the creator of the household');
+    }
+
+    const isCreator = household.created_by === this.user;
+    const isSelf = member.user_id === this.user;
+
+    if (!isCreator && !isSelf) {
+      throw new ForbiddenError('Only the household creator or the member themselves can remove a member');
+    }
+
+    await query('DELETE FROM user_service.household_members WHERE id = $1', [memberId]);
+  }
 }
