@@ -232,6 +232,94 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /members/{memberId}:
+    delete:
+      tags:
+        - households
+      summary: remove a member from a household
+      description: remove a member from a household
+      operationId: removeHouseholdMember
+      parameters:
+        - in: path
+          name: memberId
+          schema:
+            type: integer
+          required: true
+      responses:
+        204:
+          description: success
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /token/exchange:
+    post:
+      tags:
+        - token
+      summary: Exchange Auth0 JWT for internal household-scoped JWT
+      description: Exchange Auth0 JWT for internal household-scoped JWT
+      operationId: exchangeToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - household_id
+              properties:
+                household_id:
+                  type: integer
+                audience:
+                  type: string
+                  default: internal
+                  description: The target audience for the generated JWT. Defaults to 'internal'.
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /token/public-key:
+    get:
+      tags:
+        - token
+      summary: Get public key for verifying internal JWTs
+      description: Get the RSA public key that microservices should use to verify internal JWT signatures
+      operationId: getPublicKey
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - publicKey
+                properties:
+                  publicKey:
+                    type: string
+                    description: PEM-encoded RSA public key
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     BaseUser:

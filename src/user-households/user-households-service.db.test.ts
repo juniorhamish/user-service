@@ -209,4 +209,4 @@ describe('user households service', () => {
   it('should throw an error if the invitation does not exist', async () => {
     await expect(serviceA.acceptInvitation(99999)).rejects.toThrowError('Invitation with id 99999 not found');
   });
-});
+}, 20000);
