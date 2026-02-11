@@ -10,6 +10,7 @@ import { generalErrorHandler, notFoundHandler } from './error-handler.js';
 import householdsRouter from './routes/user-households-router.js';
 import userInfoRouter from './routes/user-info-router.js';
 import invitationsRouter from './routes/user-invitations-router.js';
+import tokenExchangeRouter from './routes/token-exchange-router.js';
 
 const jwtCheck = auth({
   audience: 'https://user-service.dajohnston.co.uk',
@@ -47,6 +48,7 @@ app.use(
 app.use('/api/v1/user-info', userInfoRouter);
 app.use('/api/v1/households', householdsRouter);
 app.use('/api/v1/invitations', invitationsRouter);
+app.use('/api/v1/token', tokenExchangeRouter);
 // Error handlers
 app.use(generalErrorHandler, notFoundHandler);
 
