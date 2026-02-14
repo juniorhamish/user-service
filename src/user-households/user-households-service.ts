@@ -1,4 +1,4 @@
-import { DatabaseError } from '@neondatabase/serverless';
+import { DatabaseError, type PoolClient } from '@neondatabase/serverless';
 import {
   DATABASE_ERROR_CODES,
   DuplicateEntityError,
@@ -6,7 +6,7 @@ import {
   InvitedUserIsOwnerError,
   NotFoundError,
 } from '../db-error-handling/db-errors.js';
-import { query } from '../lib/db.js';
+import { query, withTransaction } from '../lib/db.js';
 
 export type HouseholdMember = {
   id: number;
@@ -20,10 +20,10 @@ export type Household = {
   updated_at: string | null;
   created_at: string | null;
   created_by: string;
-  members?: HouseholdMember[];
-  pending_invites?: HouseholdInvitation[];
+  members: HouseholdMember[];
+  pending_invites: HouseholdInvitation[];
 };
-export type WritableHousehold = { name: string };
+export type WritableHousehold = { name: string; invitations?: string[] };
 export type HouseholdInvitation = {
   id: number;
   household_id: number;
@@ -41,16 +41,21 @@ export class UserHouseholdsService {
 
   async createHousehold(household: WritableHousehold) {
     try {
-      const { rows } = await query(
-        'INSERT INTO user_service.households (name, created_by) VALUES ($1, $2) RETURNING *',
-        [household.name, this.user],
-      );
-      const createdHousehold = rows[0];
-      await query('INSERT INTO user_service.household_members (household_id, user_id) VALUES ($1, $2)', [
-        createdHousehold.id,
-        this.user,
-      ]);
-      return await this.enrichHousehold(createdHousehold);
+      return await withTransaction(async (client) => {
+        const { rows } = await client.query(
+          'INSERT INTO user_service.households (name, created_by) VALUES ($1, $2) RETURNING *',
+          [household.name, this.user],
+        );
+        const createdHousehold = rows[0];
+        await client.query('INSERT INTO user_service.household_members (household_id, user_id) VALUES ($1, $2)', [
+          createdHousehold.id,
+          this.user,
+        ]);
+        if (household.invitations && household.invitations.length > 0) {
+          await this.inviteUsers(createdHousehold.id, household.invitations, client);
+        }
+        return await this.enrichHousehold(createdHousehold, client);
+      });
     } catch (error) {
       throw this.handleDatabaseError(error, household);
     }
@@ -60,14 +65,15 @@ export class UserHouseholdsService {
     await query('DELETE FROM user_service.households WHERE id = $1 AND created_by = $2', [id, this.user]);
   }
 
-  async getHousehold(id: number) {
-    const { rows } = await query(
+  async getHousehold(id: number, dbClient?: PoolClient) {
+    const q = dbClient ? dbClient.query.bind(dbClient) : query;
+    const { rows } = await q(
       `SELECT * FROM user_service.households 
        WHERE id = $1 AND (created_by = $2 OR id IN (SELECT household_id FROM user_service.household_members WHERE user_id = $2))`,
       [id, this.user],
     );
     if (rows.length === 0) throw new NotFoundError(`Household with id ${id} not found`);
-    return await this.enrichHousehold(rows[0]);
+    return await this.enrichHousehold(rows[0], dbClient);
   }
 
   async updateHousehold(id: number, household: WritableHousehold) {
@@ -97,29 +103,31 @@ export class UserHouseholdsService {
        ORDER BY created_at DESC`,
       [this.user],
     );
-    return Promise.all(rows.map(async (household) => await this.enrichHousehold(household)));
+    return Promise.all(rows.map(async (household: Household) => await this.enrichHousehold(household)));
   }
 
-  async enrichHousehold(household: Household) {
+  async enrichHousehold(household: Household, dbClient?: PoolClient) {
+    const q = dbClient ? dbClient.query.bind(dbClient) : query;
     const [{ rows: pending_invites }, { rows: members }] = await Promise.all([
-      query('SELECT * FROM user_service.household_invitations WHERE household_id = $1', [household.id]),
-      query('SELECT * FROM user_service.household_members WHERE household_id = $1', [household.id]),
+      q('SELECT * FROM user_service.household_invitations WHERE household_id = $1', [household.id]),
+      q('SELECT * FROM user_service.household_members WHERE household_id = $1', [household.id]),
     ]);
 
     return {
       ...household,
       pending_invites,
       members,
-    };
+    } as Household;
   }
 
-  async inviteUsers(householdId: number, emails: string[]) {
-    const household = await this.getHousehold(householdId);
+  async inviteUsers(householdId: number, emails: string[], dbClient?: PoolClient) {
+    const household = await this.getHousehold(householdId, dbClient);
     if (emails.includes(household.created_by)) throw new InvitedUserIsOwnerError();
 
+    const q = dbClient ? dbClient.query.bind(dbClient) : query;
     return await Promise.all(
       emails.map(async (email) => {
-        const { rows } = await query(
+        const { rows } = await q(
           'INSERT INTO user_service.household_invitations (invited_user, household_id, invited_by_user_id) VALUES ($1, $2, $3) RETURNING *',
           [email, householdId, this.user],
         ).catch((error) => {
@@ -128,7 +136,7 @@ export class UserHouseholdsService {
           }
           throw error;
         });
-        return rows[0];
+        return rows[0] as HouseholdInvitation;
       }),
     );
   }
@@ -158,7 +166,7 @@ export class UserHouseholdsService {
     if (rows.length === 0) {
       throw new NotFoundError(`Invitation with id ${invitationId} not found`);
     }
-    const invitation = rows[0];
+    const invitation = rows[0] as HouseholdInvitation;
 
     if (invitation.invited_user !== this.user) {
       throw new ForbiddenError('This invitation is not for you');
@@ -173,7 +181,7 @@ export class UserHouseholdsService {
 
   async removeMember(householdId: number, memberId: number) {
     const household = await this.getHousehold(householdId);
-    const member = household.members?.find((m) => m.id === memberId);
+    const member = household.members?.find((m: { id: number }) => m.id === memberId);
 
     if (!member) {
       throw new NotFoundError(`Member with id ${memberId} not found in household ${householdId}`);

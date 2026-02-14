@@ -422,6 +422,12 @@ components:
           readOnly: true
           items:
             $ref: '#/components/schemas/HouseholdMember'
+        invitations:
+          type: array
+          items:
+            type: string
+            format: email
+          writeOnly: true
     Household:
       type: object
       allOf:
