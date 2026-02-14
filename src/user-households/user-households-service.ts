@@ -20,8 +20,8 @@ export type Household = {
   updated_at: string | null;
   created_at: string | null;
   created_by: string;
-  members?: HouseholdMember[];
-  pending_invites?: HouseholdInvitation[];
+  members: HouseholdMember[];
+  pending_invites: HouseholdInvitation[];
 };
 export type WritableHousehold = { name: string; invitations?: string[] };
 export type HouseholdInvitation = {
@@ -103,7 +103,7 @@ export class UserHouseholdsService {
        ORDER BY created_at DESC`,
       [this.user],
     );
-    return Promise.all(rows.map(async (household) => await this.enrichHousehold(household)));
+    return Promise.all(rows.map(async (household: Household) => await this.enrichHousehold(household)));
   }
 
   async enrichHousehold(household: Household, dbClient?: PoolClient) {
@@ -117,7 +117,7 @@ export class UserHouseholdsService {
       ...household,
       pending_invites,
       members,
-    };
+    } as Household;
   }
 
   async inviteUsers(householdId: number, emails: string[], dbClient?: PoolClient) {
@@ -136,7 +136,7 @@ export class UserHouseholdsService {
           }
           throw error;
         });
-        return rows[0];
+        return rows[0] as HouseholdInvitation;
       }),
     );
   }
@@ -166,7 +166,7 @@ export class UserHouseholdsService {
     if (rows.length === 0) {
       throw new NotFoundError(`Invitation with id ${invitationId} not found`);
     }
-    const invitation = rows[0];
+    const invitation = rows[0] as HouseholdInvitation;
 
     if (invitation.invited_user !== this.user) {
       throw new ForbiddenError('This invitation is not for you');
