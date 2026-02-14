@@ -216,6 +216,49 @@ describe('user households routes', () => {
           members: [],
         });
       });
+      it('should return the created household with invitations', async () => {
+        createUserHouseholdMock.mockResolvedValue({
+          id: 1,
+          name: 'Dave',
+          created_by: '',
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+          pending_invites: [
+            {
+              id: 99,
+              household_id: 1,
+              invited_user: 'foo@bar.com',
+              invited_by_user_id: 'UserID',
+              invited_at: '2025-01-01T00:00:00Z',
+            },
+          ],
+          members: [],
+        });
+        const response = await request(app)
+          .post('/api/v1/households')
+          .send({ name: 'Dave', invitations: ['foo@bar.com'] });
+
+        expect(UserHouseholdsService).toHaveBeenCalledWith('UserID');
+        expect(createUserHouseholdMock).toHaveBeenCalledWith({ name: 'Dave', invitations: ['foo@bar.com'] });
+        expect(response.status).toEqual(201);
+        expect(response.body).toEqual({
+          id: 1,
+          name: 'Dave',
+          created_by: '',
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+          pending_invites: [
+            {
+              id: 99,
+              household_id: 1,
+              invited_user: 'foo@bar.com',
+              invited_by_user_id: 'UserID',
+              invited_at: '2025-01-01T00:00:00Z',
+            },
+          ],
+          members: [],
+        });
+      });
       it('should return a 409 status code when the household already exists', async () => {
         createUserHouseholdMock.mockRejectedValue(new DuplicateEntityError());
         const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
@@ -233,6 +276,17 @@ describe('user households routes', () => {
         const response = await request(app).post('/api/v1/households').send({ name: 'Dave' });
         expect(response.status).toEqual(500);
         expect(response.body).toEqual({ status: 500, message: 'An unknown error occurred.' });
+      });
+      it('should return a 400 status code when the invited user is the owner', async () => {
+        createUserHouseholdMock.mockRejectedValue(new InvitedUserIsOwnerError());
+        const response = await request(app)
+          .post('/api/v1/households')
+          .send({ name: 'Dave', invitations: ['UserID@email.com'] });
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          status: 400,
+          message: 'The invited user is already the owner of the household',
+        });
       });
     });
     describe('deleteHousehold', () => {

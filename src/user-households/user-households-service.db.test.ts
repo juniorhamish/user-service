@@ -31,6 +31,29 @@ describe('user households service', () => {
       }),
     );
   });
+  it('should invite users when creating a household', async () => {
+    const result = await serviceA.createHousehold({
+      name: 'Test Household',
+      invitations: ['B', 'C'],
+    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        name: 'Test Household',
+        pending_invites: [
+          expect.objectContaining({ invited_user: 'B', invited_by_user_id: 'A' }),
+          expect.objectContaining({ invited_user: 'C', invited_by_user_id: 'A' }),
+        ],
+        members: [expect.objectContaining({ user_id: 'A' })],
+      }),
+    );
+  });
+  it('should not create the household if it fails to invite the user too', async () => {
+    await expect(
+      (async () => await serviceA.createHousehold({ name: 'A', invitations: ['A'] }))(),
+    ).rejects.toThrowError('The invited user is already the owner of the household');
+    const households = await serviceA.getUserHouseholds();
+    expect(households).toEqual([]);
+  });
   it('should return only the households created by themself', async () => {
     await serviceA.createHousehold({ name: 'A' });
     await serviceB.createHousehold({ name: 'B' });
