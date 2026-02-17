@@ -287,4 +287,16 @@ describe('user households service', () => {
     const { members: updated_members } = await serviceA.getHousehold(household_id);
     expect(updated_members).toEqual([expect.objectContaining({ user_id: 'A' })]);
   });
+  it('should return a list of pending invitations for the user', async () => {
+    const { id: household_id } = await serviceA.createHousehold({ name: 'A' });
+    await serviceA.inviteUsers(household_id, ['B']);
+    const invitations = await serviceB.getPendingInvitations();
+    expect(invitations).toEqual([
+      expect.objectContaining({ invited_user: 'B', household_id, invited_by_user_id: 'A' }),
+    ]);
+  });
+  it('should return an empty list if there are no pending invitations', async () => {
+    const invitations = await serviceA.getPendingInvitations();
+    expect(invitations).toEqual([]);
+  });
 }, 60000);

@@ -188,6 +188,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /invitations:
+    get:
+      tags:
+        - households
+      summary: Get outstanding invitations for the requesting user
+      description: Get outstanding invitations for the requesting user
+      operationId: getOutstandingInvitations
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HouseholdInvitation'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /invitations/{invitationId}:
     delete:
       tags:
