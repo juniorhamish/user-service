@@ -5,6 +5,25 @@ import { UserHouseholdsService } from '../user-households/user-households-servic
 
 const router = Router();
 
+router.get('/', async (request, response, next) => {
+  const userId = request.auth?.payload.email as string;
+  if (userId) {
+    const householdService = new UserHouseholdsService(userId);
+    try {
+      const invitations = await householdService.getPendingInvitations();
+      response.json(invitations);
+    } catch (error) {
+      if (error instanceof Error) {
+        next(createError(500, error.message));
+      } else {
+        next(createError(500, 'An unknown error occurred.'));
+      }
+    }
+  } else {
+    next(createError(401, 'Invalid credentials'));
+  }
+});
+
 router.delete('/:invitationId', async (request, response, next) => {
   const userId = request.auth?.payload.email as string;
   if (userId) {

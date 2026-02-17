@@ -106,6 +106,14 @@ export class UserHouseholdsService {
     return Promise.all(rows.map(async (household: Household) => await this.enrichHousehold(household)));
   }
 
+  async getPendingInvitations() {
+    const { rows } = await query(
+      'SELECT * FROM user_service.household_invitations WHERE invited_user = $1 ORDER BY invited_at DESC',
+      [this.user],
+    );
+    return rows as HouseholdInvitation[];
+  }
+
   async enrichHousehold(household: Household, dbClient?: PoolClient) {
     const q = dbClient ? dbClient.query.bind(dbClient) : query;
     const [{ rows: pending_invites }, { rows: members }] = await Promise.all([
