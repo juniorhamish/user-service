@@ -27,6 +27,7 @@ export type WritableHousehold = { name: string; invitations?: string[] };
 export type HouseholdInvitation = {
   id: number;
   household_id: number;
+  household_name: string;
   invited_user: string;
   invited_by_user_id: string;
   invited_at: string | null;
@@ -108,7 +109,9 @@ export class UserHouseholdsService {
 
   async getPendingInvitations() {
     const { rows } = await query(
-      'SELECT * FROM user_service.household_invitations WHERE invited_user = $1 ORDER BY invited_at DESC',
+      `SELECT i.*, h.name as household_name FROM user_service.household_invitations i
+       JOIN user_service.households h ON i.household_id = h.id
+       WHERE i.invited_user = $1 ORDER BY i.invited_at DESC`,
       [this.user],
     );
     return rows as HouseholdInvitation[];
@@ -116,10 +119,11 @@ export class UserHouseholdsService {
 
   async enrichHousehold(household: Household, dbClient?: PoolClient) {
     const q = dbClient ? dbClient.query.bind(dbClient) : query;
-    const [{ rows: pending_invites }, { rows: members }] = await Promise.all([
+    const [{ rows: pending_invites_rows }, { rows: members }] = await Promise.all([
       q('SELECT * FROM user_service.household_invitations WHERE household_id = $1', [household.id]),
       q('SELECT * FROM user_service.household_members WHERE household_id = $1', [household.id]),
     ]);
+    const pending_invites = pending_invites_rows.map((row) => ({ ...row, household_name: household.name }));
 
     return {
       ...household,
@@ -144,7 +148,7 @@ export class UserHouseholdsService {
           }
           throw error;
         });
-        return rows[0] as HouseholdInvitation;
+        return { ...rows[0], household_name: household.name } as HouseholdInvitation;
       }),
     );
   }
@@ -152,7 +156,7 @@ export class UserHouseholdsService {
   async deleteInvitation(invitationId: number) {
     // Check if user is owner of the household or the invited user
     const { rows } = await query(
-      `SELECT i.* FROM user_service.household_invitations i
+      `SELECT i.*, h.name as household_name FROM user_service.household_invitations i
        JOIN user_service.households h ON i.household_id = h.id
        WHERE i.id = $1 AND (h.created_by = $2 OR i.invited_user = $2)`,
       [invitationId, this.user],
@@ -165,7 +169,7 @@ export class UserHouseholdsService {
 
   async acceptInvitation(invitationId: number) {
     const { rows } = await query(
-      `SELECT i.* FROM user_service.household_invitations i
+      `SELECT i.*, h.name as household_name FROM user_service.household_invitations i
        JOIN user_service.households h ON i.household_id = h.id
        WHERE i.id = $1 AND (i.invited_user = $2 OR h.created_by = $2)`,
       [invitationId, this.user],

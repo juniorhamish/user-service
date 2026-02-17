@@ -40,8 +40,8 @@ describe('user households service', () => {
       expect.objectContaining({
         name: 'Test Household',
         pending_invites: [
-          expect.objectContaining({ invited_user: 'B', invited_by_user_id: 'A' }),
-          expect.objectContaining({ invited_user: 'C', invited_by_user_id: 'A' }),
+          expect.objectContaining({ invited_user: 'B', invited_by_user_id: 'A', household_name: 'Test Household' }),
+          expect.objectContaining({ invited_user: 'C', invited_by_user_id: 'A', household_name: 'Test Household' }),
         ],
         members: [expect.objectContaining({ user_id: 'A' })],
       }),
@@ -133,8 +133,18 @@ describe('user households service', () => {
     const { id } = await serviceA.createHousehold({ name: 'A' });
     const result = await serviceA.inviteUsers(id, ['test@foo.com', 'test@bar.com']);
     expect(result).toEqual([
-      expect.objectContaining({ invited_user: 'test@foo.com', household_id: id, invited_by_user_id: 'A' }),
-      expect.objectContaining({ invited_user: 'test@bar.com', household_id: id, invited_by_user_id: 'A' }),
+      expect.objectContaining({
+        invited_user: 'test@foo.com',
+        household_id: id,
+        invited_by_user_id: 'A',
+        household_name: 'A',
+      }),
+      expect.objectContaining({
+        invited_user: 'test@bar.com',
+        household_id: id,
+        invited_by_user_id: 'A',
+        household_name: 'A',
+      }),
     ]);
   });
   it('should not be possible to invite a user to a household you are not the owner of', async () => {
@@ -171,7 +181,14 @@ describe('user households service', () => {
     expect(households).toEqual([
       expect.objectContaining({
         name: 'A',
-        pending_invites: [expect.objectContaining({ invited_user: 'B', household_id: id, invited_by_user_id: 'A' })],
+        pending_invites: [
+          expect.objectContaining({
+            invited_user: 'B',
+            household_id: id,
+            invited_by_user_id: 'A',
+            household_name: 'A',
+          }),
+        ],
       }),
     ]);
   });
@@ -182,7 +199,14 @@ describe('user households service', () => {
     expect(updatedHousehold).toEqual(
       expect.objectContaining({
         name: 'C',
-        pending_invites: [expect.objectContaining({ invited_user: 'B', household_id: id, invited_by_user_id: 'A' })],
+        pending_invites: [
+          expect.objectContaining({
+            invited_user: 'B',
+            household_id: id,
+            invited_by_user_id: 'A',
+            household_name: 'C',
+          }),
+        ],
         members: [expect.objectContaining({ user_id: 'A', household_id: id })],
       }),
     );
@@ -292,7 +316,7 @@ describe('user households service', () => {
     await serviceA.inviteUsers(household_id, ['B']);
     const invitations = await serviceB.getPendingInvitations();
     expect(invitations).toEqual([
-      expect.objectContaining({ invited_user: 'B', household_id, invited_by_user_id: 'A' }),
+      expect.objectContaining({ invited_user: 'B', household_id, invited_by_user_id: 'A', household_name: 'A' }),
     ]);
   });
   it('should return an empty list if there are no pending invitations', async () => {

@@ -170,6 +170,7 @@ describe('user households routes', () => {
                 invited_by_user_id: 'bar@foo.com',
                 id: 99,
                 household_id: 1,
+                household_name: 'Dave',
                 invited_user: 'foo@bar.com',
                 invited_at: '2026-01-13T22:09:05Z',
               },
@@ -193,6 +194,7 @@ describe('user households routes', () => {
                 invited_by_user_id: 'bar@foo.com',
                 id: 99,
                 household_id: 1,
+                household_name: 'Dave',
                 invited_user: 'foo@bar.com',
                 invited_at: '2026-01-13T22:09:05Z',
               },
@@ -239,6 +241,7 @@ describe('user households routes', () => {
             {
               id: 99,
               household_id: 1,
+              household_name: 'Dave',
               invited_user: 'foo@bar.com',
               invited_by_user_id: 'UserID',
               invited_at: '2025-01-01T00:00:00Z',
@@ -263,6 +266,7 @@ describe('user households routes', () => {
             {
               id: 99,
               household_id: 1,
+              household_name: 'Dave',
               invited_user: 'foo@bar.com',
               invited_by_user_id: 'UserID',
               invited_at: '2025-01-01T00:00:00Z',
@@ -496,6 +500,7 @@ describe('user households routes', () => {
           {
             id: 1,
             household_id: 1,
+            household_name: 'Some Household',
             invited_by_user_id: 'UserId',
             invited_user: 'david@foo.com',
             invited_at: '2025-01-01T00:00:00Z',
@@ -503,6 +508,7 @@ describe('user households routes', () => {
           {
             id: 2,
             household_id: 1,
+            household_name: 'Some Household',
             invited_by_user_id: 'UserId',
             invited_user: 'david@bar.com',
             invited_at: '2025-01-01T00:00:00Z',
@@ -517,6 +523,7 @@ describe('user households routes', () => {
           {
             id: 1,
             household_id: 1,
+            household_name: 'Some Household',
             invited_by_user_id: 'UserId',
             invited_user: 'david@foo.com',
             invited_at: '2025-01-01T00:00:00Z',
@@ -524,6 +531,7 @@ describe('user households routes', () => {
           {
             id: 2,
             household_id: 1,
+            household_name: 'Some Household',
             invited_by_user_id: 'UserId',
             invited_user: 'david@bar.com',
             invited_at: '2025-01-01T00:00:00Z',
@@ -654,6 +662,7 @@ describe('user households routes', () => {
           {
             id: 1,
             household_id: 1,
+            household_name: 'Some Household',
             invited_by_user_id: 'bar@foo.com',
             invited_user: 'user@example.com',
             invited_at: '2025-01-01T00:00:00Z',
@@ -667,6 +676,7 @@ describe('user households routes', () => {
           {
             id: 1,
             household_id: 1,
+            household_name: 'Some Household',
             invited_by_user_id: 'bar@foo.com',
             invited_user: 'user@example.com',
             invited_at: '2025-01-01T00:00:00Z',
