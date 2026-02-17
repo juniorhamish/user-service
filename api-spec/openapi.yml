@@ -466,6 +466,7 @@ components:
       required:
         - id
         - household_id
+        - household_name
         - invited_by_user_id
         - invited_user
         - invited_at
@@ -475,6 +476,9 @@ components:
           readOnly: true
         household_id:
           type: integer
+          readOnly: true
+        household_name:
+          type: string
           readOnly: true
         invited_by_user_id:
           type: string
